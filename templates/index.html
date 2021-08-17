@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- banner -->
+<section class="banner_main">
+ <div class="container">
+    <div class="row d_flex">
+       <div class="col-md-5">
+          <div class="text-bg my-3">
+             <h1>Citadel: Coding</h1>
+             <span>by _Theorist_</span>
+             <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud </p>
+             <a href="/addblog">Get Started</a>
+          </div>
+       </div>
+       <div id="fpage" class="mx-auto" style="width: 450px;">
+             <figure><img src="/static/images/fpage.png"></figure>
+       </div>
+    </div>
+ </div>
+<!--</section>-->
+<!-- end banner -->
+<!-- Services  -->
+<div id="service" class="Services">
+   <div class="container">
+      <div class="row">
+         <div class="col-md-12">
+            <div class="titlepage">
+               <h2>Best Coding Tutorials</h2>
+               <p>You can write and read blogs on the following <br>
+                  lucrative topics for free.
+               </p>
+            </div>
+         </div>
+      </div>
+      <div class="row">
+         <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
+            <a href="/blogindex">
+            <div class="Services-box">
+               <i><img src="/static/images/service1.png" alt="/blogindex" /></i>
+               <h3> Website building</h3>
+               <p>Tutorials on building websites using html5, css, Javascript. we cover frameworks like Flask, Django, Rest and many more</p>
+            </div>
+            </a>
+         </div>
+         <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
+            <a href="/blogindex">
+            <div class="Services-box">
+               <i><img src="/static/images/service2.png" alt="/blogindex" /></i>
+               <h3>Artificial Intelligence</h3>
+               <p>Guided tutorials and guides on Machine learning. Whether you are a newb or an expert there is stuff in here for you!</p>
+            </div>
+            </a>
+         </div>
+         <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
+            <a href="/blogindex">
+            <div class="Services-box">
+               <i><img src="/static/images/service3.png" alt="/blogindex" /></i>
+               <h3>Cryptography</h3>
+               <p>Want to learn about cryptography? We have tutorials on different encryption and hashing algorithms</p>
+            </div>
+            </a>
+         </div>
+<!--         <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">-->
+<!--            <div class="Services-box">-->
+<!--               <i><img src="/static/images/service4.png" alt="#" /></i>-->
+<!--               <h3>VPS Hosting</h3>-->
+<!--               <p>Donec nec justo eget felis facilisis fermentum. Aliquam porttitor mauris sit amet orci.</p>-->
+<!--            </div>-->
+<!--         </div>-->
+<!--         <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">-->
+<!--            <div class="Services-box">-->
+<!--               <i><img src="/static/images/service5.png" alt="#" /></i>-->
+<!--               <h3>Cloud Hosting</h3>-->
+<!--               <p>Donec nec justo eget felis facilisis fermentum. Aliquam porttitor mauris sit amet orci.</p>-->
+<!--            </div>-->
+<!--         </div>-->
+<!--         <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">-->
+<!--            <div class="Services-box">-->
+<!--               <i><img src="/static/images/service6.png" alt="#" /></i>-->
+<!--               <h3>Reseller Hosting</h3>-->
+<!--               <p>Donec nec justo eget felis facilisis fermentum. Aliquam porttitor mauris sit amet orci.</p>-->
+<!--            </div>-->
+<!--         </div>-->
+         <a class="read_more" href="/about">Read More</a>
+      </div>
+   </div>
+</div>
+</section>
+<!-- end Services -->
+
+<style>
+
+    #fpage {
+    margin-top:-30px;}
+      body{
+      background-color: #0c0f38;}
+</style>
+{% endblock content %}

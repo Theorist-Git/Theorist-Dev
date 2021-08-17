@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class = "container my-3">
+      <h2>Reset Password</h2>
+      <form action = "/passreset" method = "POST">
+        <div class="form-group mb-3">
+          <label for="Password">Password</label>
+          <input autofocus="autofocus" type="password" class="form-control" name = "pass" id="Password" placeholder="Password">
+        </div>
+        <div class="form-group mb-3">
+          <label for="CPassword">Confirm Password</label>
+          <input type="password" class="form-control" name = "cpass" id="CPassword" placeholder="Confirm Password">
+        </div>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <div class="alert alert-primary my-3" role="alert" >
+          Greeting, Traveller!
+        </div>
+        <button type="submit" id = "s_ubmit" class="btn btn-primary">Submit</button>
+
+        </form>
+  <div class="container my-3">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+         {% if messages %}
+               {% for category, message in messages %}
+                    {% if category == 'error' %}
+                        <div class="alert alert-danger" role="alert">
+                        {{ message }}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-success" role="alert">
+                        {{ message }}
+                        </div>
+                    {% endif %}
+               {% endfor %}
+         {% endif %}
+        {% endwith %}
+        </div>
+<!--  <button onclick="location.href = '/otp';" type="submit" id = "s_ubmit" class="btn btn-primary">Submit</button>-->
+</div>
+
+{% endblock content %}

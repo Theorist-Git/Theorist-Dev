@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class = "container my-3">
+      <h2>Enter OTP</h2>
+      <form action = "/OTPCheck" method = "POST">
+        <div class="mb-3">
+          <label for="FOTP" class="form-label">OTP</label>
+          <input autofocus="autofocus" type="text" class="form-control" name = "otp" id="FOTP" aria-describedby="emailHelp" placeholder="Enter otp sent to your email, valid for 5 minutes">
+          <div id="emailHelp" class="form-text">OTP</div>
+        </div>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <button id = "otpsub" type="submit" class="btn btn-primary">Submit OTP</button>
+        <div class="alert alert-primary my-3" role="alert" >
+          Greeting, Traveller!
+        </div>
+
+      </form>
+    <div class="container my-3">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+         {% if messages %}
+               {% for category, message in messages %}
+                    {% if category == 'error' %}
+                        <div class="alert alert-danger" role="alert">
+                        {{ message }}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-success" role="alert">
+                        {{ message }}
+                        </div>
+                    {% endif %}
+               {% endfor %}
+         {% endif %}
+        {% endwith %}
+        </div>
+</div>
+
+{% endblock content %}

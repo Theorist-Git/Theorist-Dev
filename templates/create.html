@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class = "container my-3">
+      <h2>Create Account</h2>
+      <form action = "/create" method = "POST">
+        <div class="form-group mb-3">
+          <label for="CName" class="form-label">Name</label>
+          <input autofocus="autofocus" type="text" class="form-control" name = "name" id="CName" aria-describedby="emailHelp" placeholder="Name : John Doe">
+        </div>
+        <div class="form-group mb-3">
+          <label for="CEmail" class="form-label">Email</label>
+          <input type="email" class="form-control" name = "email" id="CEmail" aria-describedby="emailHelp" placeholder="johndoe@gmail.com">
+          <small>We won't share your email id</small>
+        </div>
+        <div class="form-group mb-3">
+          <label for="CPassword">Password</label>
+          <input type="password" class="form-control" name = "pass" id="CPassword" placeholder="Password">
+        </div>
+         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <div class="alert alert-primary my-3" role="alert" >
+          Greeting, Traveller!
+        </div>
+          {% if i == 'An OTP has been sent to your email, you will soon be redirected' %}
+
+            <div class="alert alert-success my-3" role="alert" >
+              {{ i }}
+            </div>
+
+          {% elif i == 'email already in use!!' %}
+            <div class="alert alert-danger my-3" role="alert" >
+              {{ i }}
+            </div>
+          {% endif %}
+        <button type="submit" id = "s_ubmit" class="btn btn-primary">Submit</button>
+
+        </form>
+<!--  <button onclick="location.href = '/otp';" type="submit" id = "s_ubmit" class="btn btn-primary">Submit</button>-->
+        <div class="container my-3">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+         {% if messages %}
+               {% for category, message in messages %}
+                    {% if category == 'error' %}
+                        <div class="alert alert-danger" role="alert">
+                        {{ message }}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-success" role="alert">
+                        {{ message }}
+                        </div>
+                    {% endif %}
+               {% endfor %}
+         {% endif %}
+        {% endwith %}
+        </div>
+</div>
+
+{% endblock content %}

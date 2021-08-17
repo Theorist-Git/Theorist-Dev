@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class = "container my-3">
+    <h1 class="display-4" align="center">Make a blogpost</h1>
+</div>
+<div class = "container my-3">
+    <form action = "/addblog" method = "POST">
+        <div class="form-group mb-3">
+          <label for="CName" class="form-label">Title</label>
+          <input autofocus="autofocus" type="text" class="form-control" name = "title" id="CName" aria-describedby="emailHelp" placeholder="Enter title of your post">
+        </div>
+        <div class = "container my-3">
+            <textarea id = "editor" name = "editor" class="tinymce"></textarea>
+            <!-- javascript -->
+<!--            <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>-->
+            <script type="text/javascript" src="static/plugin/tinymce/js/tinymce/tinymce.min.js"></script>
+            <script type="text/javascript" src="static/plugin/tinymce/js/tinymce/init-tinymce.js"></script>
+        </div>
+        <div class="form-group mb-3">
+          <label for="author" class="form-label">Author</label>
+          <input type="text" class="form-control" name = "author" id="author" aria-describedby="emailHelp" placeholder="Author Name">
+        </div>
+        <div class="form-group mb-3">
+          <label for="time" class="form-label">How many minutes to read</label>
+          <input type="number" class="form-control" name = "time" id="time" aria-describedby="emailHelp" placeholder="eg: 5 minutes">
+        </div>
+        <div class="form-group mb-3">
+          <label for="desc" class="form-label">Description</label>
+            <textarea id="desc" name="desc" rows="4" cols="50" class ="form-control"></textarea>
+        </div>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <center>
+        <button type="submit" id = "s_ubmit" class="btn btn-primary btn-lg btn-block">Submit</button>
+        </center>
+    </form>
+</div>
+<div class="container my-3">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+         {% if messages %}
+               {% for category, message in messages %}
+                    {% if category == 'error' %}
+                        <div class="alert alert-danger" role="alert">
+                        {{ message }}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-success" role="alert">
+                        {{ message }}
+                        </div>
+                    {% endif %}
+               {% endfor %}
+         {% endif %}
+        {% endwith %}
+</div>
+{% endblock content %}

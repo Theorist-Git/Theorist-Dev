@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class = "container my-3">
+      <h2>Recovery</h2>
+      <form action = "/femail" method = "POST">
+        <div class="form-group mb-3">
+          <label for="Rmail" class="form-label">Email</label>
+          <input autofocus="autofocus" type="email" class="form-control" name = "Remail" id="Rmail" aria-describedby="emailHelp"
+                 placeholder="Enter your registered email address">
+        </div>
+        <div>
+            <button id = "esub" type="submit" class="btn btn-primary">Submit</button>
+        </div>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      </form>
+    <div class="alert alert-danger" role="alert">
+      Unfortunately, if you don't have access to your email-id, we can't do anything for you :c
+    </div>
+    <div class="container my-3">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+         {% if messages %}
+               {% for category, message in messages %}
+                    {% if category == 'error' %}
+                        <div class="alert alert-danger" role="alert">
+                        {{ message }}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-success" role="alert">
+                        {{ message }}
+                        </div>
+                    {% endif %}
+               {% endfor %}
+         {% endif %}
+        {% endwith %}
+    </div>
+</div>
+
+{% endblock content %}
