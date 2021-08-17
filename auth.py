@@ -13,8 +13,10 @@ from website import tert
 
 # creating an instance of blueprint class for auth.py, later to be registered in the app.
 auth = Blueprint('auth', __name__)
+
 rn_jesus = tert.OTPMethods
 postman = tert.ElectronicMail
+
 
 """
 i)Referrer:

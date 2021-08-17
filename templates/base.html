@@ -11,7 +11,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="viewport" content="initial-scale=1, maximum-scale=1">
     <!-- site metas -->
-    <title>Citadel</title>
+    <title>Citadel Coding</title>
     <meta name="keywords" content="">
     <meta name="description" content="">
     <meta name="author" content="">
@@ -41,7 +41,7 @@
                   <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col logo_section">
                         <a style="color:white" class="navbar-brand mb-0 h1" href="/">
                             <img src="/static/images/citadelLogo.png" width="20" height="20" class="d-inline-block align-top" alt="">
-                            Citadel
+                            Citadel Coding
                         </a>
                   </div>
                   <div class="col-xl-9 col-lg-9 col-md-9 col-sm-9">
@@ -54,11 +54,16 @@
                               <li class="nav-item active">
                                  <a class="nav-link" href="/">Home</a>
                               </li>
-                              <li class="nav-item">
-                                 <a class="nav-link" href="/login">Sign in</a>
-                              </li>
+                              {% if not current_user.is_authenticated %}
+                                  <li class="nav-item">
+                                     <a class="nav-link" href="/login">Sign in</a>
+                                  </li>
+                              {% endif %}
                               <li class="nav-item">
                                  <a class="nav-link" href="/about">About</a>
+                              </li>
+                               <li class="nav-item">
+                                 <a class="nav-link" href="/modelindex">Models</a>
                               </li>
                               <li class="nav-item">
                                  <a class="nav-link" href="/feedback">Contact</a>
@@ -66,9 +71,11 @@
                                <li class="nav-item">
                                  <a class="nav-link" href="/blogindex">Blog</a>
                               </li>
+                              {% if not current_user.is_authenticated %}
                               <li class="nav-item">
                                  <a class="nav-link" href="/create">Sign Up</a>
                               </li>
+                              {% endif %}
                                {% if current_user.is_authenticated %}
                                    <li class="nav-item">
                                     <div class="btn-group">
@@ -103,7 +110,7 @@
       <div class="col-lg-3 mb-3">
         <a style="color:white" class="navbar-brand mb-0 h1" href="/">
             <img src="/static/images/citadelLogo.png" width="20" height="20" class="d-inline-block align-top" alt="">
-            Citadel
+            Citadel Coding
         </a>
         <ul class="list-unstyled small text-muted">
           <li class="mb-2">Designed and built with all the love in the world by the <a href="https://github.com/Theorist-Git">Mayank Vats</a>.</li>

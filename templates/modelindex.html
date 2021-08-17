@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block content %}
+<div id="service" class="Services">
+   <div class="container">
+      <div class="row">
+         <div class="col-md-12">
+            <div class="titlepage">
+               <h2>Deployment Terminal</h2>
+               <h5>Working models of codes and projects on topics like machine learning, cryptography, web development etc <br>
+               </h5>
+            </div>
+         </div>
+      </div>
+      <div class="row">
+         <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
+            <a href="/blogindex">
+            <div class="Services-box">
+               <i><img src="/static/images/service1.png" alt="/blogindex" /></i>
+               <h3> Machine Learning</h3>
+               <p>Artificial intelligence models of Regression, KNN, Deep learning and similar algorithms
+               are deployed here.</p>
+            </div>
+            </a>
+         </div>
+         <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
+            <a href="/blogindex">
+            <div class="Services-box">
+               <i><img src="/static/images/service2.png" alt="/blogindex" /></i>
+               <h3>Cryptography</h3>
+               <p>Cryptographic algorithms are implemented here for you to get an idea of how they work in practice</p>
+            </div>
+            </a>
+         </div>
+         <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
+            <a href="/blogindex">
+            <div class="Services-box">
+               <i><img src="/static/images/service3.png" alt="/blogindex" /></i>
+               <h3>Miscellaneous</h3>
+               <p>Miscellaneous models are deployed here. Eg: YouTube video downloader, reddit bots, discord bots etc</p>
+            </div>
+            </a>
+         </div>
+      </div>
+   </div>
+</div>
+<style>
+    .Services .Services-box p {
+        color: #000;
+    }
+    .Services .titlepage p {
+        color: #000;
+    }
+    .Services .titlepage h2 {
+        color: #000;
+    }
+    .Services {
+        background: #e0e0e0;
+    }
+    .Services .Services-box h3 {
+        color: #000;
+    }
+    body{
+        background-color: #e0e0e0;
+    }
+</style>
+
+{% endblock content %}

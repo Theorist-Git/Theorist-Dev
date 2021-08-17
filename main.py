@@ -37,4 +37,4 @@ if __name__ == '__main__':
         print('\033[1m', 'PRODUCTION SERVER', '\033[0m')
         serve(app, listen='127.0.0.1:5000', threads=10)
 
-    run_prod_server()
+    run_dev_server()
