@@ -11,9 +11,7 @@ def test_otp_mails():
     WHEN initialization is done and mail is sent
     THEN check:
             i)   if initialization was successful
-            ii)  if server is_active (i.e server status == 205)
             iii) if OTP generated only has integer character
-            iv)  if server is not active after email is sent to bdickus172@gmail.com
     """
     rn_jesus = tert.OTPMethods
     postman = tert.ElectronicMail
@@ -21,11 +19,9 @@ def test_otp_mails():
     if rn_jesus and postman:
         initialization = True
     assert initialization is True
-    assert postman.is_active(postman.server) is True
     comp_otp = rn_jesus.return_random(otp_len=6)
     assert comp_otp.isalpha() is not True
     postman.sendmail("bdickus172@gmail.com", "pytest running...", comp_otp)
-    assert postman.is_active(postman.server) is False
 
 
 def test_misc():
