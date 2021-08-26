@@ -5,7 +5,6 @@ See license.txt
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session
 from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.exceptions import abort
-from werkzeug.security import check_password_hash, generate_password_hash
 from website import db
 from datetime import datetime
 from website.models import User, Post, Comment
@@ -16,6 +15,7 @@ auth = Blueprint('auth', __name__)
 
 rn_jesus = tert.OTPMethods
 postman = tert.ElectronicMail
+password_police = tert.CryptographyMethods.Hashing
 
 
 """
@@ -114,8 +114,11 @@ def otp():
                 user_otp = request.form['otp']
                 if user_otp == comp_otp:
 
-                    new_user = User(name=name, password=generate_password_hash(p_pass, method='pbkdf2:sha256:101000'),
-                                    email=email, active=True, last_confirmed_at=datetime.now())
+                    new_user = User(name=name,
+                                    password=password_police.generate_password_hash(p_pass, method='argon2id'),
+                                    email=email,
+                                    active=True,
+                                    last_confirmed_at=datetime.now())
                     db.session.add(new_user)
                     db.session.commit()
                     login_user(new_user, remember=False)
@@ -160,7 +163,7 @@ def login():
         user = User.query.filter_by(email=Lemail).first()
         if user:
             if not user.two_FA:
-                if check_password_hash(user.password, p_pass):
+                if password_police.check_password_hash(user.password, p_pass):
                     login_user(user, remember=False)
                     user.active = True
                     user.last_confirmed_at = datetime.now()
@@ -170,7 +173,7 @@ def login():
                 else:
                     flash('Incorrect password, try again.', category='error')
             else:
-                if check_password_hash(user.password, p_pass):
+                if password_police.check_password_hash(user.password, p_pass):
                     LFA_otp = rn_jesus.return_random(otp_len=6)
                     return redirect(url_for('auth.FAlogin'))
                 else:
@@ -436,7 +439,7 @@ def passreset():
                 cpassword = request.form['cpass']
                 if Cpassword == cpassword:
                     Duser = User.query.filter_by(email=Femail).first()
-                    Duser.password = generate_password_hash(cpassword, method='pbkdf2:sha256:101000')
+                    Duser.password = password_police.generate_password_hash(cpassword, method='argon2id')
                     db.session.commit()
                     flash('Password changed successfully!', category='success')
                     return redirect(url_for('auth.home'))

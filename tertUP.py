@@ -61,6 +61,35 @@ class ElectronicMail:
         server.quit()
 
 
+class CryptographyMethods:
+    class Hashing:
+
+        @staticmethod
+        def generate_password_hash(password, method: str = "argon2id"):
+            supported_hash_methods = [
+                "argon2id"
+            ]
+            if method == "argon2id":
+                from argon2 import PasswordHasher
+                crypt_er = PasswordHasher()
+                return crypt_er.hash(password)
+            else:
+                return f"We don't support '{method}' method yet. \n" \
+                       f"Here are the supported methods : {supported_hash_methods}"
+
+        @staticmethod
+        def check_password_hash(secret, password):
+            if "$argon" in secret:
+                from argon2 import PasswordHasher, exceptions
+                crypt_er = PasswordHasher()
+                try:
+                    return crypt_er.verify(secret, password)
+                except exceptions.VerifyMismatchError:
+                    return False
+            else:
+                raise TypeError("Unsupported Hash-Type")
+
+
 class Misc:
 
     @staticmethod
