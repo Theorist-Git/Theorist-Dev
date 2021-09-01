@@ -1,5 +1,5 @@
 /* Copyright (C) Mayank Vats - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Unauthorized copying of any file, via any medium is strictly prohibited
  * Proprietary and confidential
  * Contact the author if you want to use it.
  * Feel free to use the static and template files

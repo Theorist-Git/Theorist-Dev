@@ -1,3 +1,7 @@
+"""
+Copyright (C) 2021 Mayank Vats
+See license.txt
+"""
 from website import create_app
 import logging
 from waitress import serve

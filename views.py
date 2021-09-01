@@ -62,7 +62,7 @@ def addblog():
                 row_count = Post.query.filter_by(user_id=current_user.id).count()
                 directory = current_user.email
                 if row_count == 1:
-                    parent_dir = "templates/User_files"
+                    parent_dir = "templates//User_files"
                     path = os.path.join(parent_dir, directory)
                     isFile = os.path.isfile(path)
                     if not isFile:
@@ -70,186 +70,18 @@ def addblog():
                 f_name = f"templates//User_files//{directory}//{blog_name}.html"
                 import io
                 f = io.open(f_name, "w", encoding="utf-8")
-                f.write("""{% extends 'base.html' %}
-    {% block content %}
-    <title>CitadelBlog</title>
-    <link rel="shortcut icon" type="image/jpg" href="/static/favicon.ico"/>
-    <div class="main mx-5 my-3" style="border:2px solid black;">
-    <div class="main mx-5 my-3" style = "font-family:arial;">""")
+                f.write("""
+<!--This is an auto-generated file-->
+{% extends 'blog_base.html' %}
+{% block blog %}
+{% raw %}
+    """)
                 f.write(post)
-                f.write("""</div>
-    </div>
-    <!-- Main Body -->
-    {% if current_user.is_authenticated %}
-    <div style="background-color: #000000">
-    <section>
-        <div class="container">
-            <div class="row">
-                <div class="my-3">
-                    <form action = {{tdata}} method = "POST" id="algin-form">
-                        <div class="form-group">
-                            <h4>Leave a comment</h4> <label>Message</label> <textarea name="msg" id="msg" cols="30" rows="5"
-                             class="form-control" style="background-color: white;"></textarea>
-                        </div>
-                        <div> <label>Name: &emsp; {{current_user.name}}</label></div>
-                        <div> <label>Email: &emsp; {{current_user.email}}</label></div>
-    
-                        <div class="form-group">
-                            <p class="text-secondary">If you wish, you can sub to our <a href="/404" class="alert-link">
-                            Newsletter</a></p>
-                        </div>
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                        <button type="submit" id = "s_ubmit" class="btn btn-primary btn-lg btn-block">Submit</button>
-                    </form>
-                </div>
-                <div class="my-4">
-                    <h1>Comments</h1>
-                    {% for i in comments %}
-                    <div class="comment col-12 my-3">
-                        <h4>{{ i.name }}</h4> <span>- {{ i.date }}</span> <br>
-                        <p>{{ i.data }}</p>
-                    </div>
-                    {% endfor %}
-                </div>
-    
-            </div>
-        </div>
-    </section>
-    </div>
-    {% endif %}
-    <style>
-      @media(min-width:568px) {
-        .end {
-            margin-left: auto
-        }
-    }
-    
-    @media(max-width:768px) {
-        #post {
-            width: 100%
-        }
-    }
-    
-    #clicked {
-        padding-top: 1px;
-        padding-bottom: 1px;
-        text-align: center;
-        width: 100%;
-        background-color: #ecb21f;
-        border-color: #a88734 #9c7e31 #846a29;
-        color: black;
-        border-width: 1px;
-        border-style: solid;
-        border-radius: 13px
-    }
-    
-    #profile {
-        background-color: unset
-    }
-    
-    #post {
-        margin: 10px;
-        padding: 6px;
-        padding-top: 2px;
-        padding-bottom: 2px;
-        text-align: center;
-        background-color: #ecb21f;
-        border-color: #a88734 #9c7e31 #846a29;
-        color: black;
-        border-width: 1px;
-        border-style: solid;
-        border-radius: 13px;
-        width: 50%
-    }
-    
-    #nav-items li a,
-    #profile {
-        text-decoration: none;
-        color: rgb(224, 219, 219);
-        background-color: black
-    }
-    
-    .comments {
-        margin-top: 5%;
-        margin-left: 20px
-    }
-    
-    .darker {
-        border: 1px solid #ecb21f;
-        background-color: black;
-        float: right;
-        border-radius: 5px;
-        padding-left: 40px;
-        padding-right: 30px;
-        padding-top: 10px
-    }
-    
-    .comment {
-        border: 1px solid rgba(16, 46, 46, 1);
-        background-color: rgba(16, 46, 46, 0.973);
-        float: left;
-        border-radius: 5px;
-        padding-left: 40px;
-        padding-right: 30px;
-        padding-top: 10px
-    }
-    
-    .comment h4,
-    .comment span,
-    .darker h4,
-    .darker span {
-        display: inline
-    }
-    
-    .comment p,
-    .comment span,
-    .darker p,
-    .darker span {
-        color: rgb(184, 183, 183)
-    }
-    
-    h1,
-    h4 {
-        color: white;
-        font-weight: bold
-    }
-    
-    label {
-        color: rgb(212, 208, 208)
-    }
-    
-    #align-form {
-        margin-top: 20px
-    }
-    
-    .form-group p a {
-        color: white
-    }
-    
-    #checkbx {
-        background-color: black
-    }
-    
-    #darker img {
-        margin-right: 15px;
-        position: static
-    }
-    
-    .form-group input,
-    .form-group textarea {
-        background-color: black;
-        border: 1px solid rgba(16, 46, 46, 1);
-        border-radius: 12px
-    }
-    
-    form {
-        border: 1px solid rgba(16, 46, 46, 1);
-        background-color: rgba(16, 46, 46, 0.973);
-        border-radius: 5px;
-        padding: 20px
-    }
-    </style>
-    {% endblock content %}""")
+                f.write("""
+{% endraw %}
+{% endblock blog %}
+<!--End of auto-generated file-->
+    """)
                 f.close()
     else:
         return redirect(url_for('views.apply'))
@@ -284,7 +116,7 @@ def blogindex():
 def feedback():
     """
     Feedback form, the response submitted is submitted to
-    the admin. UNDER CONSTRUCTION
+    the admin.
 
     :return: renders template feedback.html
     """
