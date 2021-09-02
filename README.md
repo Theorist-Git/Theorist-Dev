@@ -2,8 +2,8 @@
 
 * Citadel is a website/Blog, where you can post about your coding projects and also collaborate with other developers.
 The website has been made using Flask framework. User authentication is managed with the help of [flask-login](https://flask-login.readthedocs.io/en/latest/).
-Passwords are hashed and checked with [werkzeug.security](https://werkzeug.palletsprojects.com/en/2.0.x/utils/).
-Hashing algorithm used is pbkdf2:sha256 (101000 rounds). CSRF tokens are managed using Flask-WTF, CSRF protection is enabled globally.
+
+* Hashing algorithm used is argon2id. CSRF tokens are managed using Flask-WTF, CSRF protection is enabled globally.
 * [TinyMCE](https://www.tiny.cloud/) is used as the WYSIWYG editor. Installation details below. The editor automatically manages XSS attacks by escaping script characters.
 * [DevBlog v1.3](https://themes.3rdwavemedia.com/bootstrap-templates/personal/devblog-free-bootstrap-4-blog-template-for-developers/)
 is used as the template for the blog index.
