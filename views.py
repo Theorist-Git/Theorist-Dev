@@ -122,7 +122,11 @@ def feedback():
     """
     if request.method == "POST":
         feed = request.form.get('feed')
-        postman.sendmail("bdickus172@gmail.com", "User Feedback", feed, role="admin")
+        if len(feed) > 10:
+            postman.sendmail("bdickus172@gmail.com", "User Feedback", feed, role="admin")
+            flash("Your feedback has been recorded!", category="success")
+        else:
+            flash("The message needs to be longer", category="error")
     return render_template("feedback.html")
 
 

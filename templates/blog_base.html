@@ -2,7 +2,7 @@
 {% block content %}
 
 <div class="main mx-5 my-3" style = "font-family:arial;">
-<div class="main mx-2 my-3" style="border:1px solid black;">
+<div class="main mx-2 my-5" style="border:1px solid black;" id="blogbox">
 <div class="mx-3 my-5">
 {% block blog %}
 {% endblock blog %}
@@ -15,7 +15,7 @@
 <section>
     <div class="container">
         <div class="row">
-            <div class="my-3">
+            <div class="my-5">
                 <form action = {{tdata}} method = "POST" id="algin-form">
                     <div class="form-group">
                         <h4 id="head1">Leave a comment</h4> <label>Message</label> <textarea name="msg" id="msg" cols="30" rows="5"
@@ -32,15 +32,17 @@
                     <button type="submit" id = "s_ubmit" class="btn btn-primary btn-lg btn-block">Submit</button>
                 </form>
             </div>
-            <div class="my-4">
-                <h1 id="head2">Comments</h1>
-                {% for i in comments %}
-                <div class="comment col-12 my-3">
-                    <h4 id="head3">{{ i.name }}</h4> <span>- {{ i.date }}</span> <br>
-                    <p>{{ i.data }}</p>
+            {% if comments |length != 0 %}
+                <div class="my-4">
+                    <h1 id="head2">Comments</h1>
+                    {% for i in comments %}
+                    <div class="comment col-12 my-3">
+                        <h4 id="head3">{{ i.name }}</h4> <span>- {{ i.date }}</span> <br>
+                        <p>{{ i.data }}</p>
+                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
-            </div>
+            {% endif %}
 
         </div>
     </div>
@@ -179,10 +181,22 @@ form {
     border-radius: 5px;
     padding: 20px
 }
+#blogbox {
+    -webkit-box-shadow: 0 0 10px rgb(105, 130, 255);
+    -moz-box-shadow: 0 0 10px rgb(0,0,0);
+}
 </style>
 <script>
     if ( window.history.replaceState ) {
       window.history.replaceState( null, null, window.location.href );
     }
 </script>
+<link rel="stylesheet"
+      href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/github-dark.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
+<script>document.addEventListener('DOMContentLoaded', (event) => {
+  document.querySelectorAll('code').forEach((el) => {
+    hljs.highlightElement(el);
+  });
+});</script>
 {% endblock content %}
