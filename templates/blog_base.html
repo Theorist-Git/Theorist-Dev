@@ -12,11 +12,11 @@
 <!-- Main Body -->
 {% if current_user.is_authenticated %}
 <div style="background-color: #000000">
-<section>
+<section id="comms">
     <div class="container">
         <div class="row">
             <div class="my-5">
-                <form action = {{tdata}} method = "POST" id="algin-form">
+                <form action = {{tdata}}#comms method = "POST" id="algin-form">
                     <div class="form-group">
                         <h4 id="head1">Leave a comment</h4> <label>Message</label> <textarea name="msg" id="msg" cols="30" rows="5"
                          class="form-control" style="background-color: white;"></textarea>
