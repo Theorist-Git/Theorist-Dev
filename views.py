@@ -25,7 +25,7 @@ def addblog():
     (see /static/plugin/tinymce). The WYSIWYG editor inherently escapes
     script characters providing protection against XSS attacks. The title
     entered by the user is first sanitized and an HTML file is saved under
-    user_files folder, in the sub-folder which is their email address. Separate
+    blogindex folder, in the sub-folder which is their email address. Separate
     folders are created to each user. The HTML file is stored with 'utf-8 encoding',
     it is an extended base.html document. Comment functionality is embedded
     by default with each Blog.
@@ -62,12 +62,12 @@ def addblog():
                 row_count = Post.query.filter_by(user_id=current_user.id).count()
                 directory = current_user.email
                 if row_count == 1:
-                    parent_dir = "templates//User_files"
+                    parent_dir = "templates/blogindex"
                     path = os.path.join(parent_dir, directory)
                     isFile = os.path.isfile(path)
                     if not isFile:
                         os.mkdir(path)
-                f_name = f"templates//User_files//{directory}//{blog_name}.html"
+                f_name = f"templates//blogindex//{directory}//{blog_name}.html"
                 import io
                 f = io.open(f_name, "w", encoding="utf-8")
                 f.write("""
@@ -160,8 +160,13 @@ def modelindex():
     return render_template('modelindex.html')
 
 
+@views.route('/docs', methods=['GET'])
+def docs():
+    return render_template('docs-base.html')
+
+
 # Generic view for blogs.
-@views.route('/<some_place>', methods=['GET', 'POST'])
+@views.route('<some_place>', methods=['GET', 'POST'])
 def show_blog(some_place):
     """
     GENERIC FLASK VIEW TO HANDLE ALL NON-EXPLICITLY CODED VIEW REQUESTS:
@@ -186,4 +191,4 @@ def show_blog(some_place):
         comments = Comment.query.filter_by(href=f'/{title}').all()
     else:
         abort(404)
-    return render_template(f"//User_files//{author.email}//{title}.html", tdata=title, comments=comments)
+    return render_template(f"//blogindex//{author.email}//{title}.html", tdata=title, comments=comments)

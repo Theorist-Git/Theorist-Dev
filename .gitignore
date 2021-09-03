@@ -2,5 +2,5 @@
 *.log
 tert.py
 __init__.py
-User_files
+blogindex
 *.coverage
