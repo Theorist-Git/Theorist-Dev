@@ -182,6 +182,9 @@ def show_blog(some_place):
     """
     title = request.path[1:]
     author = Post.query.filter_by(href=request.path).first()
+    if author and author.clicks < 99 and request.method == "GET":
+        author.clicks += 1
+        db.session.commit()
     if author:
         if request.method == "POST":
             data = request.form.get('msg')

@@ -21,7 +21,7 @@ def test_home_page_get(test_client):
     """
     response = test_client.get('/')
     assert response.status_code == 200
-    assert b'Citadel: Coding' in response.data
+    assert b'Machine-Learning, Cryptography and Web-Development' in response.data
     response = test_client.get('/blogindex')
     assert response.status_code == 200
     assert b'CitadelBlog - A blog for everything software' in response.data

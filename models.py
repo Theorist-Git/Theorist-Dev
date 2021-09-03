@@ -39,6 +39,7 @@ class Post(db.Model):
     time = db.Column(db.String(10))
     desc = db.Column(db.String(500))
     href = db.Column(db.String(50))
+    clicks = db.Column(db.Integer, default=0)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
 
