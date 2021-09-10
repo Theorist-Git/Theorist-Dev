@@ -104,7 +104,9 @@ def blogindex():
         search_query = request.form['search_query']
         searched_blogs = blogs[0:0]
         for i in fblogs:
-            if search_query.upper() in misc.capitalize_list(i.data.split()) or search_query.upper() in misc.capitalize_list(i.desc.split()) or search_query.upper() in misc.capitalize_list(i.author.split()):
+            if search_query.upper() in misc.capitalize_list(
+                    i.data.split()) or search_query.upper() in misc.capitalize_list(
+                    i.desc.split()) or search_query.upper() in misc.capitalize_list(i.author.split()):
                 searched_blogs.append(i)
                 blogs = searched_blogs
         if blogs == fblogs:
@@ -160,9 +162,12 @@ def modelindex():
     return render_template('modelindex.html')
 
 
-@views.route('/docs', methods=['GET'])
-def docs():
-    return render_template('docs-base.html')
+@views.route('/generator', methods=['GET', 'POST'])
+def gen():
+    if request.method == 'POST':
+        post = request.form.get('editor')
+        print(post)
+    return render_template("CodeGen.html", user=current_user)
 
 
 # Generic view for blogs.
@@ -188,7 +193,8 @@ def show_blog(some_place):
     if author:
         if request.method == "POST":
             data = request.form.get('msg')
-            new_comment = Comment(name=current_user.name, email=current_user.email, data=data, date=datetime.now(), user_id=current_user.id, href=f'/{title}')
+            new_comment = Comment(name=current_user.name, email=current_user.email, data=data, date=datetime.now(),
+                                  user_id=current_user.id, href=f'/{title}')
             db.session.add(new_comment)
             db.session.commit()
         comments = Comment.query.filter_by(href=f'/{title}').all()

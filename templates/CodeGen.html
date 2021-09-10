@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+{% if current_user.role == "admin" %}
+    <div class = "container my-3">
+        <h1 class="display-4" align="center">Code to HTML</h1>
+    </div>
+    <div class = "container my-3">
+        <form action = "/generator" method = "POST">
+            <div class = "container my-3">
+                <textarea id = "editor" name = "editor" class="tinymce"></textarea>
+                <!-- javascript -->
+    <!--            <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>-->
+                <script type="text/javascript" src="static/plugin/tinymce/js/tinymce/tinymce.min.js"></script>
+                <script type="text/javascript" src="static/plugin/tinymce/js/tinymce/init-tinymce.js"></script>
+            </div>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <center>
+            <button type="submit" id = "s_ubmit" class="btn btn-primary btn-lg btn-block">Submit</button>
+            </center>
+        </form>
+    </div>
+{% endif %}
+{% endblock content %}

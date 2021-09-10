@@ -17,8 +17,8 @@ tinymce.init({
 	/* plugin */
 	plugins: [
 		"advlist autolink link image lists charmap print preview hr anchor pagebreak",
-		"searchreplace wordcount visualblocks visualchars code fullscreen insertdatetime media nonbreaking",
-		"save table directionality emoticons template paste"
+		"searchreplace wordcount visualblocks visualchars code codesample fullscreen insertdatetime media nonbreaking",
+		"save table directionality emoticons template paste",
 	],
 
 	/* toolbar */

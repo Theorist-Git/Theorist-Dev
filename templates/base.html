@@ -60,7 +60,7 @@
                                  <a class="nav-link" href="/about">About</a>
                               </li>
                                <li class="nav-item">
-                                 <a class="nav-link" href="/modelindex">Models</a>
+                                 <a class="nav-link" href="/modelindex">Projects</a>
                               </li>
                               <li class="nav-item">
                                  <a class="nav-link" href="/feedback">Contact</a>
@@ -119,7 +119,8 @@
         <h5 style="color:white">Links</h5>
         <ul class="list-unstyled">
           <li class="mb-2"><a href="/">Home</a></li>
-          <li class="mb-2"><a href="/docs">Docs</a></li>
+          <li class="mb-2"><a href="/blogindex">Blog</a></li>
+<!--          <li class="mb-2"><a href="/docs">Docs</a></li>-->
         </ul>
       </div>
       <div class="col-6 col-lg-2 mb-3">
@@ -153,7 +154,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.js"></script>
 <script>
-    if(window.location.href.includes("docs")){
+    if(window.location.href.toLowerCase().includes("docs")){
     var link = document.getElementById("base-head");
     link.setAttribute("style", "margin-top:-69px;");
     }
