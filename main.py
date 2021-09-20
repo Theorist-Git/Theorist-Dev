@@ -1,6 +1,18 @@
 """
 Copyright (C) 2021 Mayank Vats
 See license.txt
+/* Copyright (C) Mayank Vats - All Rights Reserved
+* Unauthorized copying of any file, via any medium is strictly prohibited
+* Proprietary and confidential
+* Contact the author if you want to use it.
+* Feel free to use the static and template files
+* Written by Mayank Vats <testpass.py@gmail.com>, 2021
+*/
+If you have this file and weren't given access to it by
+the author, you're breaching copyright, delete this file
+immediately and contact the author on the aforementioned
+email address. Don't worry, you should be fine as long as you don't
+use or distribute this software.
 """
 from website import create_app
 import logging
@@ -41,4 +53,4 @@ if __name__ == '__main__':
         print('\033[1m', 'PRODUCTION SERVER', '\033[0m')
         serve(app, listen='127.0.0.1:5000', threads=10)
 
-    run_dev_server()
+    run_prod_server()

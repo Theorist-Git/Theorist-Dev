@@ -1,20 +1,32 @@
 """
 Copyright (C) 2021 Mayank Vats
 See license.txt
+/* Copyright (C) Mayank Vats - All Rights Reserved
+* Unauthorized copying of any file, via any medium is strictly prohibited
+* Proprietary and confidential
+* Contact the author if you want to use it.
+* Feel free to use the static and template files
+* Written by Mayank Vats <testpass.py@gmail.com>, 2021
+*/
+If you have this file and weren't given access to it by
+the author, you're breaching copyright, delete this file
+immediately and contact the author on the aforementioned
+email address. Don't worry, you should be fine as long as you don't
+use or distribute this software.
 """
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, request, flash, redirect, url_for, session
 from flask_login import login_required, current_user
 from datetime import datetime
 from werkzeug.exceptions import abort
 from .models import Post, Comment
 from . import db
 import os
-from website import tert
+from website.tert import OTPMethods, ElectronicMail, Misc
 
 views = Blueprint('views', __name__)
-otp_gen = tert.OTPMethods
-postman = tert.ElectronicMail
-misc = tert.Misc
+otp_gen = OTPMethods()
+postman = ElectronicMail()
+misc = Misc()
 
 
 @views.route('/addblog', methods=['GET', 'POST'])
@@ -32,31 +44,33 @@ def addblog():
 
     :return: renders template addblog.html
     """
-    global link
     authorized = ["admin", "author"]
     if current_user.role in authorized:
         if request.method == 'POST':
-            post = request.form.get('editor')
-            title = request.form.get('title')
-            author = request.form.get('author')
-            time = request.form.get('time')
-            desc = request.form.get('desc')
+            session['post'] = request.form.get('editor')
+            session['title'] = request.form.get('title')
+            session['time'] = request.form.get('time')
+            session['desc'] = request.form.get('desc')
             final_title = ""
-            for i in title:
+            for i in session['title']:
                 if i.isalpha():
                     final_title += i
-            blog_name = final_title[:10].replace(' ', '')
-            blog_name += otp_gen.return_random(otp_len=8)
+            session['blog_name'] = final_title[:10].replace(' ', '') + otp_gen.return_random(otp_len=8)
 
-            if len(post) < 1:
+            if len(session['post']) < 1:
                 flash('post is too short!', category='error')
-            elif len(title) < 1:
+            elif len(session['title']) < 1:
                 flash('Please add a good title', category='error')
-            elif Post.query.filter_by(href="/" + blog_name).all():
+            elif Post.query.filter_by(href="/" + session['blog_name']).all():
                 flash('This blog already exists, please change the title to proceed', category='error')
             else:
-                new_post = Post(data=title, user_id=current_user.id, author=current_user.name, time=time, desc=desc,
-                                href=f"/{blog_name}", email=current_user.email)
+                new_post = Post(data=session['title'],
+                                user_id=current_user.id,
+                                author=current_user.name,
+                                time=session['time'],
+                                desc=session['desc'],
+                                href=f"/{session['blog_name']}",
+                                email=current_user.email)
                 db.session.add(new_post)
                 db.session.commit()
                 row_count = Post.query.filter_by(user_id=current_user.id).count()
@@ -67,7 +81,7 @@ def addblog():
                     isFile = os.path.isfile(path)
                     if not isFile:
                         os.mkdir(path)
-                f_name = f"templates//blogindex//{directory}//{blog_name}.html"
+                f_name = f"templates//blogindex//{directory}//{session['blog_name']}.html"
                 import io
                 f = io.open(f_name, "w", encoding="utf-8")
                 f.write("""
@@ -76,7 +90,7 @@ def addblog():
 {% block blog %}
 {% raw %}
     """)
-                f.write(post)
+                f.write(session['post'])
                 f.write("""
 {% endraw %}
 {% endblock blog %}
@@ -101,12 +115,12 @@ def blogindex():
     fblogs = Post.query.filter_by().all()
     blogs = fblogs
     if request.method == "POST":
-        search_query = request.form['search_query']
+        session['search_query'] = request.form['search_query']
         searched_blogs = blogs[0:0]
         for i in fblogs:
-            if search_query.upper() in misc.capitalize_list(
-                    i.data.split()) or search_query.upper() in misc.capitalize_list(
-                    i.desc.split()) or search_query.upper() in misc.capitalize_list(i.author.split()):
+            if session['search_query'].upper() in misc.capitalize_list(
+                    i.data.split()) or session['search_query'].upper() in misc.capitalize_list(
+                    i.desc.split()) or session['search_query'].upper() in misc.capitalize_list(i.author.split()):
                 searched_blogs.append(i)
                 blogs = searched_blogs
         if blogs == fblogs:
@@ -123,9 +137,9 @@ def feedback():
     :return: renders template feedback.html
     """
     if request.method == "POST":
-        feed = request.form.get('feed')
-        if len(feed) > 10:
-            postman.sendmail("bdickus172@gmail.com", "User Feedback", feed, role="admin")
+        session['feed'] = request.form.get('feed')
+        if len(session['feed']) > 10:
+            postman.sendmail("bdickus172@gmail.com", "User Feedback", session['feed'], role="admin")
             flash("Your feedback has been recorded!", category="success")
         else:
             flash("The message needs to be longer", category="error")
@@ -136,20 +150,20 @@ def feedback():
 @views.route('/apply', methods=['GET', 'POST'])
 def apply():
     if request.method == "POST":
-        apply_email = current_user.email
-        name = request.form.get('name')
-        tech = request.form.get('tech')
-        app_role = request.form.getlist('role')[0]
-        deg = request.form.get('deg')
-        application = request.form.get('feed')
-        if apply_email and name and tech and app_role and deg and application:
+        session['apply_email'] = current_user.email
+        session['name'] = request.form.get('name')
+        session['tech'] = request.form.get('tech')
+        session['app_role'] = request.form.getlist('role')[0]
+        session['deg'] = request.form.get('deg')
+        session['application'] = request.form.get('feed')
+        if session['apply_email'] and session['name'] and session['tech'] and session['app_role'] and session['deg'] and session['application']:
             postman.sendmail("bdickus172@Gmail.com", "Application form",
-                             f"email: {apply_email}\n\n"
-                             f"name: {name}\n\n"
-                             f"Technologies known: {tech}\n\n"
-                             f"Role: {app_role}\n\n"
-                             f"Qualification: {deg}\n\n"
-                             f"Application: {application}\n\n",
+                             f"email: {session['apply_email']}\n\n"
+                             f"name: {session['name']}\n\n"
+                             f"Technologies known: {session['tech']}\n\n"
+                             f"Role: {session['app_role']}\n\n"
+                             f"Qualification: {session['deg']}\n\n"
+                             f"Application: {session['application']}\n\n",
                              role="admin")
             flash("Your application has been sent and will be reviewed in 2-3 days", category="success")
         else:
@@ -165,14 +179,14 @@ def modelindex():
 @views.route('/generator', methods=['GET', 'POST'])
 def gen():
     if request.method == 'POST':
-        post = request.form.get('editor')
-        print(post)
+        session['post'] = request.form.get('editor')
+        print(session['post'])
     return render_template("CodeGen.html", user=current_user)
 
 
 # Generic view for blogs.
-@views.route('<some_place>', methods=['GET', 'POST'])
-def show_blog(some_place):
+@views.route('<_>', methods=['GET', 'POST'])
+def show_blog(_):
     """
     GENERIC FLASK VIEW TO HANDLE ALL NON-EXPLICITLY CODED VIEW REQUESTS:
     This enables the website's blog to function without re-loading everytime
@@ -180,7 +194,7 @@ def show_blog(some_place):
     like that exists in the database or not. If yes, it serves the blog, other-
     -wise raises 404 error.
 
-    :param some_place: The name of the blog
+    :param _: The name of the blog
     :return: renders the template passed in :param.
     Passes title and comments from the database to the HTML document
     which then displays it using JINJA2.
@@ -192,9 +206,13 @@ def show_blog(some_place):
         db.session.commit()
     if author:
         if request.method == "POST":
-            data = request.form.get('msg')
-            new_comment = Comment(name=current_user.name, email=current_user.email, data=data, date=datetime.now(),
-                                  user_id=current_user.id, href=f'/{title}')
+            session['data'] = request.form.get('msg')
+            new_comment = Comment(name=current_user.name,
+                                  email=current_user.email,
+                                  data=session['data'],
+                                  date=datetime.now(),
+                                  user_id=current_user.id,
+                                  href=f'/{title}')
             db.session.add(new_comment)
             db.session.commit()
         comments = Comment.query.filter_by(href=f'/{title}').all()

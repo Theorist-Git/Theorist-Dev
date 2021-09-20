@@ -1,6 +1,18 @@
 """
 Copyright (C) 2021 Mayank Vats
 See license.txt
+/* Copyright (C) Mayank Vats - All Rights Reserved
+* Unauthorized copying of any file, via any medium is strictly prohibited
+* Proprietary and confidential
+* Contact the author if you want to use it.
+* Feel free to use the static and template files
+* Written by Mayank Vats <testpass.py@gmail.com>, 2021
+*/
+If you have this file and weren't given access to it by
+the author, you're breaching copyright, delete this file
+immediately and contact the author on the aforementioned
+email address. Don't worry, you should be fine as long as you don't
+use or distribute this software.
 """
 from flask import Flask, render_template, url_for, flash
 from flask_admin import Admin
@@ -27,11 +39,11 @@ def create_app():
     """
     app = Flask(__name__)
     admin = Admin(app)
-    csrf = CSRFProtect(app)
+    CSRFProtect(app)
 
     # 256 bit security key
-    app.config['WTF_CSRF_SECRET_KEY'] = 'xxxx'
-    app.config['SECRET_KEY'] = 'xxxx'
+    app.config['WTF_CSRF_SECRET_KEY'] = 'xxx'
+    app.config['SECRET_KEY'] = 'xxx'
     app.config['SESSION_COOKIE_SECURE'] = True
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
@@ -51,23 +63,25 @@ def create_app():
     # In my case views are distributed in auth.py and views.py files
     from .auth import auth
     from .views import views
+    from .AuthAlphaDocs import AuthAlpha
 
     app.register_blueprint(auth, url_prefix='/')
     app.register_blueprint(views, url_prefix='/')
+    app.register_blueprint(AuthAlpha, url_prefix='/AuthAlpha')
 
     # 'app.errorhandler' decorator overrides default error pages and replaces them with custom ones
     @app.errorhandler(404)
-    def page_not_found(e):
+    def page_not_found(_):
         # note that we set the 404 status explicitly
         return render_template('404.html'), 404
 
     @app.errorhandler(403)
-    def forbidden(e):
+    def forbidden(_):
         # note that we set the 403 status explicitly
         return render_template('403.html'), 403
 
     @app.errorhandler(500)
-    def internal_server_error(e):
+    def internal_server_error(_):
         # note that we set the 500 status explicitly
         return render_template('500.html'), 500
 
@@ -75,8 +89,9 @@ def create_app():
     # we are importing instances of classes pointing to specific databases.
     from .models import User, Post, Comment
 
+    # Uncomment to remake database models ↓
     # with app.app_context():
-    #     db.create_all()  -> Uncomment to remake database models
+    #     db.create_all()
 
     # Adding admin views
     class MyAdminViews(ModelView):
@@ -88,8 +103,8 @@ def create_app():
             :return: Boolean (True -> is_accessible) & (False -> is_not_accessible)
             """
             if current_user.is_authenticated:
-                user = User.query.filter_by(role=current_user.role).first()
-                res = user.role == "admin"
+                admin_user = User.query.filter_by(role=current_user.role).first()
+                res = admin_user.role == "admin"
                 return res
 
         def _handle_view(self, name, **kwargs):

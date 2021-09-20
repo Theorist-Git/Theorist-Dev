@@ -2,7 +2,7 @@
 {% block content %}
 <div class = "container my-3">
       <h2>Enter OTP</h2>
-    <h3>OTP has been sent to {{ user.email }}</h3>
+    <h3>OTP has been sent to {{ email }}</h3>
       <form action = "/FAlogin" method = "POST">
         <div class="mb-3">
           <label for="LOTP" class="form-label">OTP</label>

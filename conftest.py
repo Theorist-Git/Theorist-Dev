@@ -2,7 +2,7 @@
 Copyright (C) 2021 Mayank Vats
 See license.txt
 """
-from werkzeug.security import generate_password_hash
+from AuthAlpha.Password_Hashing import PassHashing
 from website.models import User, Post, Comment
 import datetime
 from website import create_app
@@ -27,6 +27,8 @@ P.S: cd to project/content root of your project and then paste : pytest -v -W ig
      to run the tests configured.
 """
 
+password_police = PassHashing("argon2id")
+
 
 @pytest.fixture(scope='module')
 def new_user():
@@ -36,7 +38,7 @@ def new_user():
     :return: user, type(user) -> User
     """
     user = User(name="Theorist",
-                password=generate_password_hash("p_pass", method='pbkdf2:sha256:101000'),
+                password=password_police.generate_password_hash("p_pass"),
                 email="testpass.py@gmail.com",
                 active=True,
                 last_confirmed_at=datetime.datetime.now(),
