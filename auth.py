@@ -29,6 +29,7 @@ auth = Blueprint('auth', __name__)
 rn_jesus = OTPMethods()
 postman = ElectronicMail()
 password_police = PassHashing("argon2id")
+otp_police = PassHashing("pbkdf2:sha256")
 
 
 """
@@ -83,11 +84,12 @@ def create():
     if request.method == 'POST':
         session['NAME'] = request.form['name']
         session['EMAIL'] = request.form['email']
-        session['PASSWORD'] = request.form['pass']
+        session['PASSWORD'] = password_police.generate_password_hash(request.form['pass'])
         exists = db.session.query(User.id).filter_by(email=session['EMAIL']).first() is not None
         if exists == 0:
             return redirect(url_for('auth.otp'))
         else:
+            del session['PASSWORD']
             flash('email already in use!!', category='error')
 
     return render_template("create.html", user=current_user)
@@ -120,24 +122,24 @@ def otp():
     if referrer:
         if referrer[21:] in auth_href:
             if request.method == 'GET':
-                session['COMP_OTP'] = rn_jesus.return_random(otp_len=6)
-                postman.sendmail(session['EMAIL'], "Citadel Log-in Authorization", session['COMP_OTP'])
+                COMP_OTP = rn_jesus.return_random(otp_len=6)
+                postman.sendmail(session['EMAIL'], "Citadel Log-in Authorization", COMP_OTP)
+                session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
             if request.method == 'POST':
                 session['USER_OTP'] = request.form['otp']
-                if session['USER_OTP'] == session['COMP_OTP']:
-
+                if otp_police.check_password_hash(session['COMP_OTP'], session['USER_OTP']):
+                    del session['USER_OTP']
+                    del session['COMP_OTP']
                     new_user = User(name=session['NAME'],
-                                    password=password_police.generate_password_hash(session['PASSWORD']),
+                                    password=session['PASSWORD'],
                                     email=session['EMAIL'],
                                     active=True,
                                     last_confirmed_at=datetime.now())
+                    del session['PASSWORD']
                     db.session.add(new_user)
                     db.session.commit()
                     login_user(new_user, remember=False)
                     session.permanent = True
-                    session['PASSWORD'] = None
-                    session['USER_OTP'] = None
-                    session['COMP_OTP'] = None
                     return redirect(url_for('auth.success'))
 
                 else:
@@ -172,24 +174,21 @@ def login():
     """
     if request.method == 'POST':
         session['EMAIL'] = request.form['email']
-        session['PASSWORD'] = request.form['pass']
+        PASSWORD = request.form['pass']
         user = User.query.filter_by(email=session['EMAIL']).first()
         if user:
             if not user.two_FA:
-                if password_police.check_password_hash(user.password, session['PASSWORD']):
+                if password_police.check_password_hash(user.password, PASSWORD):
                     login_user(user, remember=False)
                     user.active = True
                     user.last_confirmed_at = datetime.now()
                     db.session.commit()
                     session.permanent = True
-                    session['PASSWORD'] = None
-                    session['USER_OTP'] = None
-                    session['COMP_OTP'] = None
                     return redirect(url_for('auth.home'))
                 else:
                     flash('Incorrect password, try again.', category='error')
             else:
-                if password_police.check_password_hash(user.password, session['PASSWORD']):
+                if password_police.check_password_hash(user.password, PASSWORD):
                     return redirect(url_for('auth.mfalogin'))
                 else:
                     flash('Incorrect password, try again.', category='error')
@@ -225,20 +224,20 @@ def mfalogin():
     if referrer:
         if referrer[21:] in auth_href:
             if request.method == 'GET':
-                session['COMP_OTP'] = rn_jesus.return_random(otp_len=6)
-                postman.sendmail(session['EMAIL'], "Citadel Log-in Authorization", session['COMP_OTP'])
+                COMP_OTP = rn_jesus.return_random(otp_len=6)
+                postman.sendmail(session['EMAIL'], "Citadel Log-in Authorization", COMP_OTP)
+                session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
             if request.method == 'POST':
                 session['USER_OTP'] = request.form['Lotp']
-                if session['USER_OTP'] == session['COMP_OTP']:
+                if otp_police.check_password_hash(session['COMP_OTP'], session['USER_OTP']):
+                    del session['USER_OTP']
+                    del session['COMP_OTP']
                     user = User.query.filter_by(email=session['EMAIL']).first()
                     login_user(user, remember=False)
                     user.active = True
                     user.last_confirmed_at = datetime.now()
                     db.session.commit()
                     session.permanent = True
-                    session['PASSWORD'] = None
-                    session['USER_OTP'] = None
-                    session['COMP_OTP'] = None
                     return redirect(url_for('auth.home'))
                 else:
                     flash('Wrong otp', category='error')
@@ -261,9 +260,8 @@ def logout():
     user = User.query.filter_by(email=current_user.email).first()
     user.active = False
     db.session.commit()
-    session['PASSWORD'] = None
-    session['USER_OTP'] = None
-    session['COMP_OTP'] = None
+    for key in list(session.keys()):
+        session.pop(key)
     logout_user()
     return redirect(url_for('auth.login'))
 
@@ -309,18 +307,18 @@ def two_fa():
     if referrer:
         if referrer[21:] in auth_href:
             if request.method == 'GET':
-                session['COMP_OTP'] = rn_jesus.return_random(otp_len=6)
-                postman.sendmail(current_user.email, "Citadel Log-in Authorization", session['COMP_OTP'])
+                COMP_OTP = rn_jesus.return_random(otp_len=6)
+                postman.sendmail(session['EMAIL'], "Citadel Log-in Authorization", COMP_OTP)
+                session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
             if request.method == 'POST':
                 session['USER_OTP'] = request.form['two_otp']
-                if session['USER_OTP'] == session['COMP_OTP']:
+                if otp_police.check_password_hash(session['COMP_OTP'], session['USER_OTP']):
+                    del session['USER_OTP']
+                    del session['COMP_OTP']
                     user = User.query.filter_by(email=current_user.email).first()
                     user.two_FA = True
                     db.session.commit()
                     flash('2FA enabled', category='success')
-                    session['PASSWORD'] = None
-                    session['USER_OTP'] = None
-                    session['COMP_OTP'] = None
                     logout()
                     return redirect(url_for('auth.login'))
                 else:
@@ -356,9 +354,6 @@ def disable2fa():
     user.two_FA = False
     db.session.commit()
     flash('2FA disabled', category='error')
-    session['PASSWORD'] = None
-    session['USER_OTP'] = None
-    session['COMP_OTP'] = None
     logout()
     return redirect(url_for('auth.login'))
 
@@ -423,11 +418,14 @@ def otp_check():
     if referrer:
         if referrer[21:] in auth_href:
             if request.method == 'GET':
-                session['COMP_OTP'] = rn_jesus.return_random(otp_len=6)
-                postman.sendmail(session['EMAIL'], "Citadel Log-in Authorization", session['COMP_OTP'])
+                COMP_OTP = rn_jesus.return_random(otp_len=6)
+                postman.sendmail(session['EMAIL'], "Citadel Log-in Authorization", COMP_OTP)
+                session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
             if request.method == 'POST':
                 session['USER_OTP'] = request.form['otp']
-                if session['USER_OTP'] == session['COMP_OTP']:
+                if otp_police.check_password_hash(session['COMP_OTP'], session['USER_OTP']):
+                    del session['USER_OTP']
+                    del session['COMP_OTP']
                     return redirect(url_for('auth.passreset'))
                 else:
                     flash('Wrong otp', category='error')
@@ -456,18 +454,17 @@ def passreset():
     if referrer:
         if referrer[21:] in auth_href:
             if request.method == 'POST':
-                session['PASSWORD'] = request.form['pass']
+                session['PASSWORD'] = password_police.generate_password_hash(request.form['pass'])
                 check_password = request.form['cpass']
-                if session['PASSWORD'] == check_password:
+                if password_police.check_password_hash(session['PASSWORD'], check_password):
                     user = User.query.filter_by(email=session['EMAIL']).first()
-                    user.password = password_police.generate_password_hash(session['PASSWORD'])
+                    user.password = session['PASSWORD']
+                    del session['PASSWORD']
                     db.session.commit()
-                    session['PASSWORD'] = None
-                    session['USER_OTP'] = None
-                    session['COMP_OTP'] = None
                     flash('Password changed successfully!', category='success')
                     return redirect(url_for('auth.home'))
                 else:
+                    del session['PASSWORD']
                     flash("The passwords don't match", category='error')
         else:
             abort(403)
@@ -494,6 +491,7 @@ def delete():
         User.query.filter_by(email=current_user.email).delete()
         db.session.commit()
         logout_user()
-        flash(f"account {session['EMAIL']} deleted!", category='error')
+        for key in list(session.keys()):
+            session.pop(key)
         return redirect(url_for('auth.home'))
     return render_template('delete.html', user=current_user)
