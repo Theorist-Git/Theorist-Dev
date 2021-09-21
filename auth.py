@@ -80,7 +80,10 @@ def create():
 
     :return: renders template create.html
     """
-
+    if not request.referrer:
+        for key in list(session.keys()):
+            session.pop(key)
+        flash(message="Session and OTP have expired, Please try again!", category="error")
     if request.method == 'POST':
         session['NAME'] = request.form['name']
         session['EMAIL'] = request.form['email']
@@ -172,6 +175,10 @@ def login():
 
     :return: renders template login.html
     """
+    if not request.referrer:
+        for key in list(session.keys()):
+            session.pop(key)
+        flash(message="Session and OTP have expired, Please try again!", category="error")
     if request.method == 'POST':
         session['EMAIL'] = request.form['email']
         PASSWORD = request.form['pass']
@@ -275,6 +282,13 @@ def secrets():
 
     :return: renders template secrets.html
     """
+    if not request.referrer:
+        try:
+            del session['COMP_OTP']
+            del session['USER_OTP']
+        except KeyError:
+            pass
+        flash(message="Session and OTP have expired, Please try again!", category="error")
     return render_template("secrets.html", user=current_user)
 
 
@@ -384,6 +398,10 @@ def femail():
         "/secrets",
         "/femail"
     ]
+    if not request.referrer:
+        for key in list(session.keys()):
+            session.pop(key)
+        flash(message="Session and OTP have expired, Please try again!", category="error")
     if referrer:
         if referrer[21:] in auth_href:
             if request.method == 'POST':
