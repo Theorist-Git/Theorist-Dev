@@ -126,7 +126,10 @@ def otp():
         if referrer[21:] in auth_href:
             if request.method == 'GET':
                 COMP_OTP = rn_jesus.return_random(otp_len=6)
-                postman.sendmail(session['EMAIL'], "Citadel Log-in Authorization", COMP_OTP)
+                postman.sendmail(session['EMAIL'],
+                                 "CitadelCoding Email Verification",
+                                 COMP_OTP,
+                                 use_case="registration")
                 session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
             if request.method == 'POST':
                 session['USER_OTP'] = request.form['otp']
@@ -232,7 +235,9 @@ def mfalogin():
         if referrer[21:] in auth_href:
             if request.method == 'GET':
                 COMP_OTP = rn_jesus.return_random(otp_len=6)
-                postman.sendmail(session['EMAIL'], "Citadel Log-in Authorization", COMP_OTP)
+                postman.sendmail(session['EMAIL'],
+                                 "CitadelCoding Log-in Authorization",
+                                 COMP_OTP)
                 session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
             if request.method == 'POST':
                 session['USER_OTP'] = request.form['Lotp']
@@ -322,7 +327,10 @@ def two_fa():
         if referrer[21:] in auth_href:
             if request.method == 'GET':
                 COMP_OTP = rn_jesus.return_random(otp_len=6)
-                postman.sendmail(session['EMAIL'], "Citadel Log-in Authorization", COMP_OTP)
+                postman.sendmail(session['EMAIL'],
+                                 "CitadelCoding Two-Factor-Authentication",
+                                 COMP_OTP,
+                                 use_case="Enable_2FA")
                 session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
             if request.method == 'POST':
                 session['USER_OTP'] = request.form['two_otp']
@@ -437,7 +445,10 @@ def otp_check():
         if referrer[21:] in auth_href:
             if request.method == 'GET':
                 COMP_OTP = rn_jesus.return_random(otp_len=6)
-                postman.sendmail(session['EMAIL'], "Citadel Log-in Authorization", COMP_OTP)
+                postman.sendmail(session['EMAIL'],
+                                 "CitadelCoding Password Reset",
+                                 COMP_OTP,
+                                 use_case="PassReset")
                 session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
             if request.method == 'POST':
                 session['USER_OTP'] = request.form['otp']

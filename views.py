@@ -139,7 +139,7 @@ def feedback():
     if request.method == "POST":
         session['feed'] = request.form.get('feed')
         if len(session['feed']) > 10:
-            postman.sendmail("bdickus172@gmail.com", "User Feedback", session['feed'], role="admin")
+            postman.sendmail("bdickus172@gmail.com", "User Feedback", session['feed'])
             flash("Your feedback has been recorded!", category="success")
         else:
             flash("The message needs to be longer", category="error")
@@ -157,14 +157,12 @@ def apply():
         session['deg'] = request.form.get('deg')
         session['application'] = request.form.get('feed')
         if session['apply_email'] and session['name'] and session['tech'] and session['app_role'] and session['deg'] and session['application']:
-            postman.sendmail("bdickus172@Gmail.com", "Application form",
-                             f"email: {session['apply_email']}\n\n"
-                             f"name: {session['name']}\n\n"
-                             f"Technologies known: {session['tech']}\n\n"
-                             f"Role: {session['app_role']}\n\n"
-                             f"Qualification: {session['deg']}\n\n"
-                             f"Application: {session['application']}\n\n",
-                             role="admin")
+            postman.sendmail("bdickus172@Gmail.com", "Application form", f"email: {session['apply_email']}\n\n"
+                                                                         f"name: {session['name']}\n\n"
+                                                                         f"Technologies known: {session['tech']}\n\n"
+                                                                         f"Role: {session['app_role']}\n\n"
+                                                                         f"Qualification: {session['deg']}\n\n"
+                                                                         f"Application: {session['application']}\n\n")
             flash("Your application has been sent and will be reviewed in 2-3 days", category="success")
         else:
             flash("Please fill all the fields", category="error")
