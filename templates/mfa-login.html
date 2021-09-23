@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 {% block content %}
-<meta http-equiv = "refresh" content = "300; url = /secrets" />
+<meta http-equiv = "refresh" content = "300; url = /login" />
 <div class = "container my-3">
-      <h2>Enter OTP to enable 2FA</h2>
-    <h3>OTP has been sent to {{ user.email }}</h3>
-      <form action = "/two_FA" method = "POST">
+      <h2>Enter OTP</h2>
+    <h3>OTP has been sent to {{ email }}</h3>
+      <form action = "/mfa-login" method = "POST">
         <div class="mb-3">
-          <label for="TwoOTP" class="form-label">OTP</label>
-          <input autofocus="autofocus" type="text" class="form-control" name = "two_otp" id="TwoOTP" aria-describedby="emailHelp" placeholder="Enter otp sent to your email, valid for 5 minutes">
+          <label for="LOTP" class="form-label">OTP</label>
+          <input autofocus="autofocus" type="text" class="form-control" name = "Lotp" id="LOTP" aria-describedby="emailHelp" placeholder="Enter otp sent to your email, valid for 5 minutes">
           <div id="emailHelp" class="form-text">OTP</div>
         </div>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
