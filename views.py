@@ -169,7 +169,7 @@ def apply():
     return render_template("apply.html", current_user=current_user)
 
 
-@views.route('/modelindex', methods=['GET', 'POST'])
+@views.route('/Projects', methods=['GET', 'POST'])
 def modelindex():
     return render_template('modelindex.html')
 
@@ -199,6 +199,7 @@ def show_blog(_):
     """
     title = request.path[1:]
     author = Post.query.filter_by(href=request.path).first()
+    comments = Comment
     if author and author.clicks < 99 and request.method == "GET":
         author.clicks += 1
         db.session.commit()

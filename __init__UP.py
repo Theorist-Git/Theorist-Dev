@@ -23,9 +23,9 @@ from datetime import timedelta
 from flask_login import current_user
 from werkzeug.utils import redirect
 from flask_wtf.csrf import CSRFProtect
+from session_encrytion import EncryptedSession, EncryptedSessionInterface
 
-# We define our an SQLAlchemy object
-
+# We define an SQLAlchemy object
 db = SQLAlchemy()
 user = current_user
 
@@ -39,18 +39,22 @@ def create_app():
     """
     app = Flask(__name__)
     admin = Admin(app)
+
     CSRFProtect(app)
 
     # 256 bit security key
     app.config['WTF_CSRF_SECRET_KEY'] = 'xxx'
     app.config['SECRET_KEY'] = 'xxx'
+    AES = b'xxx'
+    app.config['SESSION_CRYPTO_KEY'] = AES
     app.config['SESSION_COOKIE_SECURE'] = True
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://user:password@localhost/db_name'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:xxx@localhost/xxx'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     # The session will timeout after 720 minutes or 12 hours
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=720)
+    app.session_interface = EncryptedSessionInterface()
 
     # This callback can be used to initialize an application for the
     # use with this database setup.  Never use a database in the context
@@ -63,11 +67,13 @@ def create_app():
     # In my case views are distributed in auth.py and views.py files
     from .auth import auth
     from .views import views
+    from .docs import docs
     from .AuthAlphaDocs import AuthAlpha
 
     app.register_blueprint(auth, url_prefix='/')
     app.register_blueprint(views, url_prefix='/')
-    app.register_blueprint(AuthAlpha, url_prefix='/AuthAlpha')
+    app.register_blueprint(docs, url_prefix='/Projects')
+    app.register_blueprint(AuthAlpha, url_prefix='/Projects/Cryptography')
 
     # 'app.errorhandler' decorator overrides default error pages and replaces them with custom ones
     @app.errorhandler(404)

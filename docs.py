@@ -15,15 +15,13 @@ email address. Don't worry, you should be fine as long as you don't
 use or distribute this software.
 """
 from flask import Blueprint, render_template
+from flask_login import current_user
 
-AuthAlpha = Blueprint('AuthAlpha', __name__, static_folder="static")
+# creating an instance of blueprint class for docs.py, later to be registered in the app.
 
-
-@AuthAlpha.route('/AuthAlpha-Docs', methods=['GET'])
-def auth_alpha():
-    return render_template('AuthAlpha-docs-index.html')
+docs = Blueprint('docs', __name__, static_folder="static")
 
 
-@AuthAlpha.route('/AuthAlpha-Docs-Page', methods=['GET'])
-def auth_alpha_page():
-    return render_template('AuthAlpha-docs-page.html')
+@docs.route("/Cryptography", methods=['GET', 'POST'])
+def cryptography_docs():
+    return render_template("Cryptography-Docs.html", user=current_user)
