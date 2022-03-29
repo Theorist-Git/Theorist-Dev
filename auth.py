@@ -6,7 +6,7 @@ See license.txt
 * Proprietary and confidential
 * Contact the author if you want to use it.
 * Feel free to use the static and template files
-* Written by Mayank Vats <testpass.py@gmail.com>, 2021
+* Written by Mayank Vats <testpass.py@gmail.com>, 2021-2022
 */
 If you have this file and weren't given access to it by
 the author, you're breaching copyright, delete this file
@@ -57,6 +57,7 @@ def apply_caching(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-XSS-Protection'] = '1; mode=block'
+    print(session)
     return response
 
 
@@ -77,13 +78,7 @@ def create():
     1.  To allow multiple users, data is stored in an AES encrypted session.
         For more info see 'session_encryption.py'.
 
-    2.  The password is never-ever stored in the session in plain-text, an argon2id
-        salted-hash is the only thing stored and that too for strictly 5 minutes or
-        less, this is accomplished by wiping the session if the registration isn't
-        completed in 5 minutes. Also, this is only instance in the entire app where
-        a password-hash is stored in a session.
-
-    3.  After that using an instance of SQLALCHEMY() (db), we check if the e-mail id
+    2.  After that using an instance of SQLALCHEMY() (db), we check if the e-mail id
         (Unique Primary Key) entered by the user already exists. If the checks are passed,
         the user is redirected to auth.otp.
 
@@ -95,16 +90,14 @@ def create():
     if not request.referrer:  # 'request.referrer' is 'None' when redirected through an HTML <meta> tag.
         for key in list(session.keys()):
             session.pop(key)
-        flash(message="Session and OTP have expired, Please try again!", category="error")
+        flash(message="Session and OTP have expired, Please refresh the page!", category="error")
     if request.method == 'POST':
-        session['NAME'] = request.form['name']
-        session['EMAIL'] = request.form['email']
-        session['PASSWORD'] = password_police.generate_password_hash(request.form['pass'])
+        session['NAME'] = request.form['USERNAME']
+        session['EMAIL'] = request.form['EMAIL']
         exists = db.session.query(User.id).filter_by(email=session['EMAIL']).first() is not None
         if exists == 0:
             return redirect(url_for('auth.otp'))
         else:
-            del session['PASSWORD']  # The password hash is deleted if user already exists.
             flash('email already in use!!', category='error')
 
     return render_template("create.html", user=current_user)
@@ -113,7 +106,7 @@ def create():
 @auth.route('/otp', methods=['GET', 'POST'])
 def otp():
     """
-    Used to perform OTP checks specifically for account creation (i.e for email verification).
+    Used to perform OTP checks specifically for account creation (i.e. for email verification).
 
     1.  This page is only accessible if referred from '/create' and can persist refresh and POST
         requests while on this page.
@@ -126,17 +119,19 @@ def otp():
     3.  ('POST' request): A user can make a 'POST' request on this page to submit the OTP sent to
         their e-mail, the hash of the USER_OTP is checked against the pre-known hash of the generated
         OTP, if the user enters the correct OTP, the backend database comes into effect, also, as soon
-        as the OTP is verified, both the keys, 'COMP_OTP' and 'USER_OTP' are deleted from the session
-        thus making them usable only once, hence the name One Time Password.
+        as the OTP is verified, the key, 'COMP_OTP' is deleted from the session thus making them
+        usable only once, hence the name One Time Password.
+
+    4.  A password is now also submitted through this view so that the password is never-ever stored
+        in the session in plain-text or otherwise.
 
         /*
-        P.S Again, these 'COMP_OTP' hash exists in the session for never more than 5 minutes.
+        P.S Again, these OTP hashes exist in the session never for more than 5 minutes.
         */
 
-    4.  Database Entry: A new User object is created which is a class inherited from db.Model
+    5.  Database Entry: A new User object is created which is a class inherited from db.Model
         and UserMixin that stores the Database structure to manage user data. SQLALCHEMY takes
-        care of registering a new user entry, and once the 'User' object is initialized, the
-        hash of the password is deleted from the session. The default role of a user is 'user'
+        care of registering a new user entry. The default role of a user is 'user'
         (see User class in models.py). It can be later changed by a user with admin privileges.
 
     /*  Successful navigation through this view creates an account and logs in the user
@@ -159,21 +154,20 @@ def otp():
             if request.method == 'GET':
                 COMP_OTP = rn_jesus.return_random(otp_len=6)
                 postman.sendmail(session['EMAIL'],
-                                 "CitadelCoding Email Verification",
+                                 "ArcisCoding Email Verification",
                                  COMP_OTP,
                                  use_case="registration")
                 session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
             if request.method == 'POST':
-                session['USER_OTP'] = request.form['otp']
-                if otp_police.check_password_hash(session['COMP_OTP'], session['USER_OTP']):
-                    del session['USER_OTP']
+                USER_OTP = request.form['OTP']
+                PASSWORD = password_police.generate_password_hash(request.form['PASSWORD'])
+                if otp_police.check_password_hash(session['COMP_OTP'], USER_OTP):
                     del session['COMP_OTP']
                     new_user = User(name=session['NAME'],
-                                    password=session['PASSWORD'],
+                                    password=PASSWORD,
                                     email=session['EMAIL'],
                                     active=True,
                                     last_confirmed_at=datetime.now())
-                    del session['PASSWORD']
                     db.session.add(new_user)
                     db.session.commit()
                     login_user(new_user, remember=False)
@@ -220,10 +214,10 @@ def login():
     if not request.referrer:
         for key in list(session.keys()):
             session.pop(key)
-        flash(message="Session and OTP have expired, Please try again!", category="error")
+        flash(message="Session and OTP have expired, Please refresh the page!", category="error")
     if request.method == 'POST':
-        session['EMAIL'] = request.form['email']
-        PASSWORD = request.form['pass']
+        session['EMAIL'] = request.form['EMAIL']
+        PASSWORD = request.form['PASSWORD']
         user = User.query.filter_by(email=session['EMAIL']).first()
         if user:
             if not user.two_FA:
@@ -250,7 +244,7 @@ def login():
 @auth.route('/mfa-login', methods=['GET', 'POST'])
 def mfa_login():
     """
-    This view is responsible for 2FA log-in:
+    This view is responsible for Multi-Factor Authentication during the Login process:
 
     1.  This view is only accessible through '/login' and associated referrals,
         and can persist refresh and 'POST' requests while on this page.
@@ -294,9 +288,8 @@ def mfa_login():
                                  COMP_OTP)
                 session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
             if request.method == 'POST':
-                session['USER_OTP'] = request.form['Lotp']
-                if otp_police.check_password_hash(session['COMP_OTP'], session['USER_OTP']):
-                    del session['USER_OTP']
+                USER_OTP = request.form['OTP']
+                if otp_police.check_password_hash(session['COMP_OTP'], USER_OTP):
                     del session['COMP_OTP']
                     user = User.query.filter_by(email=session['EMAIL']).first()
                     login_user(user, remember=False)
@@ -318,7 +311,7 @@ def mfa_login():
 @login_required
 def logout():
     """
-    Self explanatory view, logs-out (terminates session) of a user already logged-in.
+    Self-explanatory view, logs-out (terminates session) of a user already logged-in.
     Will be automatically called after session times-out after 12 hours.
 
     :return: redirects to 'auth.login'
@@ -343,7 +336,6 @@ def secrets():
     if not request.referrer:
         try:
             del session['COMP_OTP']
-            del session['USER_OTP']
         except KeyError:
             pass
         flash(message="Session and OTP have expired, Please try again!", category="error")
@@ -365,7 +357,7 @@ def about():
 def two_fa():
     """
     Only referable from '/secrets', on being called, emails two_FA_otp to the current user,
-    If the user POSTS the correct OTP, Two Factor Authentication is enabled on their account,
+    If the user POSTS the correct OTP, Two-Factor Authentication is enabled on their account,
     now, they would have to enter an e-mailed otp to log-in. Can be disabled on the Account
     Overview page ('secrets').
 
@@ -380,22 +372,20 @@ def two_fa():
         if referrer[21:] in auth_href:
             if request.method == 'GET':
                 COMP_OTP = rn_jesus.return_random(otp_len=6)
-                postman.sendmail(session['EMAIL'],
+                postman.sendmail(current_user.email,
                                  "CitadelCoding Two-Factor-Authentication",
                                  COMP_OTP,
                                  use_case="Enable_2FA")
                 session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
             if request.method == 'POST':
-                session['USER_OTP'] = request.form['two_otp']
-                if otp_police.check_password_hash(session['COMP_OTP'], session['USER_OTP']):
-                    del session['USER_OTP']
+                USER_OTP = request.form['OTP']
+                if otp_police.check_password_hash(session['COMP_OTP'], USER_OTP):
                     del session['COMP_OTP']
                     user = User.query.filter_by(email=current_user.email).first()
                     user.two_FA = True
                     db.session.commit()
                     flash('2FA enabled', category='success')
-                    logout()
-                    return redirect(url_for('auth.login'))
+                    return redirect(url_for('auth.secrets'))
                 else:
                     flash('Wrong otp', category='error')
         else:
@@ -410,16 +400,15 @@ def two_fa():
 def disable2fa():
     """
     View globally accessible after logging in, used to disable
-    two factor authentication.
+    two-factor authentication.
 
-    :return: redirects user to auth.login after disabling 2FA.
+    :return: redirects user to /secrets after disabling 2FA.
     """
     user = User.query.filter_by(email=current_user.email).first()
     user.two_FA = False
     db.session.commit()
     flash('2FA disabled', category='error')
-    logout()
-    return redirect(url_for('auth.login'))
+    return redirect(url_for('auth.secrets'))
 
 
 @auth.route('/forgot-pass', methods=['GET', 'POST'])
@@ -429,7 +418,7 @@ def forgot_pass():
 
     It is implemented using the following three Views:
 
-    I]  forgot_pass : Here the user has to enter their registered email address.
+    [I]  forgot_pass : Here the user has to enter their registered email address.
         This view is only accessible through /login and associated pages. If the
         user posts a valid email address, They are redirected to /OTP-check.
 
@@ -456,7 +445,7 @@ def forgot_pass():
     if referrer:
         if referrer[21:] in auth_href:
             if request.method == 'POST':
-                session['EMAIL'] = request.form['Remail']
+                session['EMAIL'] = request.form['EMAIL']
                 user = User.query.filter_by(email=session['EMAIL']).first()
                 if user:
                     return redirect(url_for('auth.otp_check'))
@@ -472,7 +461,7 @@ def forgot_pass():
 @auth.route('/OTP-Check', methods=['GET', 'POST'])
 def otp_check():
     """
-    II] OTPCheck: Referable only from /forgot_pass. When this page is called, an OTP
+    [II] OTPCheck: Referable only from /forgot_pass. When this page is called, an OTP
         is emailed to the previously entered email address, now, If the user POSTS
         the correct OTP, they are redirected to /pass-reset, where they will be allowed
         to reset their password.
@@ -494,9 +483,8 @@ def otp_check():
                                  use_case="PassReset")
                 session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
             if request.method == 'POST':
-                session['USER_OTP'] = request.form['otp']
-                if otp_police.check_password_hash(session['COMP_OTP'], session['USER_OTP']):
-                    del session['USER_OTP']
+                USER_OTP = request.form['OTP']
+                if otp_police.check_password_hash(session['COMP_OTP'], USER_OTP):
                     del session['COMP_OTP']
                     return redirect(url_for('auth.pass_reset'))
                 else:
@@ -511,9 +499,9 @@ def otp_check():
 @auth.route('/pass-reset', methods=['GET', 'POST'])
 def pass_reset():
     """
-    III]pass_reset: Referable only from /OTP-Check. Here the user POSTS a new password,
+    [III]pass_reset: Referable only from /OTP-Check. Here the user POSTS a new password,
         if the user role wasn't admin, their account is updated normally, accounts with admin
-        roles will updated but with role method overridden. After the updating, the user is
+        roles will update but with role method overridden. After the updating, the user is
         logged in with the aforementioned protocols.
 
     :return: renders template 'pass-reset.html'
@@ -526,17 +514,15 @@ def pass_reset():
     if referrer:
         if referrer[21:] in auth_href:
             if request.method == 'POST':
-                session['PASSWORD'] = password_police.generate_password_hash(request.form['pass'])
-                check_password = request.form['cpass']
-                if password_police.check_password_hash(session['PASSWORD'], check_password):
+                PASSWORD = password_police.generate_password_hash(request.form['PASSWORD'])
+                check_password = request.form['C-PASSWORD']
+                if password_police.check_password_hash(PASSWORD, check_password):
                     user = User.query.filter_by(email=session['EMAIL']).first()
-                    user.password = session['PASSWORD']
-                    del session['PASSWORD']
+                    user.password = PASSWORD
                     db.session.commit()
                     flash('Password changed successfully!', category='success')
-                    return redirect(url_for('auth.home'))
+                    return redirect(url_for('auth.secrets'))
                 else:
-                    del session['PASSWORD']
                     flash("The passwords don't match", category='error')
         else:
             abort(403)
@@ -550,7 +536,7 @@ def pass_reset():
 @login_required
 def delete():
     """
-    Self explanatory view, deletes the account, all the posts and the comments made by the user.
+    Self-explanatory view, deletes the account, all the posts and the comments made by the user.
     Users with admin role don't have an option to their delete account,
     it has to be done manually from database terminal (for security purposes).
 

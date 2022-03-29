@@ -5,12 +5,12 @@
       <h2>Reset Password</h2>
       <form action = "/pass-reset" method = "POST">
         <div class="form-group mb-3">
-          <label for="Password">Password</label>
-          <input autofocus="autofocus" type="password" class="form-control" name = "pass" id="Password" placeholder="Password">
+          <label for="PASSWORD">Password</label>
+          <input autofocus="autofocus" type="PASSWORD" class="form-control" name = "PASSWORD" id="PASSWORD" placeholder="Password">
         </div>
         <div class="form-group mb-3">
-          <label for="CPassword">Confirm Password</label>
-          <input type="password" class="form-control" name = "cpass" id="CPassword" placeholder="Confirm Password">
+          <label for="C-PASSWORD">Confirm Password</label>
+          <input type="password" class="form-control" name = "C-PASSWORD" id="C-PASSWORD" placeholder="Confirm Password">
         </div>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <div class="alert alert-primary my-3" role="alert" >
@@ -37,5 +37,10 @@
         {% endwith %}
         </div>
 </div>
-
+<script type="text/javascript">
+        window.history.forward();
+        function noBack() {
+            window.history.forward();
+        }
+</script>
 {% endblock content %}

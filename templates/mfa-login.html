@@ -6,12 +6,12 @@
     <h3>OTP has been sent to {{ email }}</h3>
       <form action = "/mfa-login" method = "POST">
         <div class="mb-3">
-          <label for="LOTP" class="form-label">OTP</label>
-          <input autofocus="autofocus" type="text" class="form-control" name = "Lotp" id="LOTP" aria-describedby="emailHelp" placeholder="Enter otp sent to your email, valid for 5 minutes">
+          <label for="OTP" class="form-label">OTP</label>
+          <input autofocus="autofocus" type="password" class="form-control" name = "OTP" id="OTP" aria-describedby="emailHelp" placeholder="Enter otp sent to your email, valid for 5 minutes">
           <div id="emailHelp" class="form-text">OTP</div>
         </div>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-        <button id = "otpsub" type="submit" class="btn btn-primary">Submit OTP</button>
+        <button id = "otp-sub" type="submit" class="btn btn-primary">Submit OTP</button>
         <div class="alert alert-primary my-3" role="alert" >
           Greeting, Traveller!
         </div>

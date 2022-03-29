@@ -5,15 +5,16 @@
       <h2>Recovery</h2>
       <form action = "/forgot-pass" method = "POST">
         <div class="form-group mb-3">
-          <label for="Rmail" class="form-label">Email</label>
-          <input autofocus="autofocus" type="email" class="form-control" name = "Remail" id="Rmail" aria-describedby="emailHelp"
+          <label for="EMAIL" class="form-label">Email</label>
+          <input autofocus="autofocus" type="email" class="form-control" name = "EMAIL" id="EMAIL" aria-describedby="emailHelp"
                  placeholder="Enter your registered email address">
         </div>
         <div>
-            <button id = "esub" type="submit" class="btn btn-primary">Submit</button>
+            <button id = "submit" type="submit" class="btn btn-primary">Submit</button>
         </div>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       </form>
+    <br>
     <div class="alert alert-danger" role="alert">
       Unfortunately, if you don't have access to your email-id, we can't do anything for you :c
     </div>

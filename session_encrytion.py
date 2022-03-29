@@ -80,10 +80,10 @@ class EncryptedSessionInterface(SessionInterface):
         # Decide whether to compress
         bdict = bytes(dumps(dict(session), cls=BinaryAwareJSONEncoder), 'utf-8')
         if len(bdict) > self.compress_threshold:
-            prefix = "Confertus"
+            prefix = "CONSTRICTUS_ARCIS"
             bdict = compress(bdict)
         else:
-            prefix = "HaudConfertus"
+            prefix = "ARCIS"
 
         # Get the crypto key
         crypto_key = app.config['SESSION_CRYPTO_KEY']

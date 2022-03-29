@@ -5,12 +5,12 @@
       <h2>Enter OTP</h2>
       <form action = "/OTP-Check" method = "POST">
         <div class="mb-3">
-          <label for="FOTP" class="form-label">OTP</label>
-          <input autofocus="autofocus" type="text" class="form-control" name = "otp" id="FOTP" aria-describedby="emailHelp" placeholder="Enter otp sent to your email, valid for 5 minutes">
+          <label for="OTP" class="form-label">OTP</label>
+          <input autofocus="autofocus" type="text" class="form-control" name = "OTP" id="OTP" aria-describedby="emailHelp" placeholder="Enter otp sent to your email, valid for 5 minutes">
           <div id="emailHelp" class="form-text">OTP</div>
         </div>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-        <button id = "otpsub" type="submit" class="btn btn-primary">Submit OTP</button>
+        <button id = "otp-sub" type="submit" class="btn btn-primary">Submit OTP</button>
         <div class="alert alert-primary my-3" role="alert" >
           Greeting, Traveller!
         </div>
@@ -34,5 +34,10 @@
         {% endwith %}
         </div>
 </div>
-
+<script type="text/javascript">
+        window.history.forward();
+        function noBack() {
+            window.history.forward();
+        }
+</script>
 {% endblock content %}

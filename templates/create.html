@@ -4,17 +4,13 @@
       <h2>Create Account</h2>
       <form action = "/create" method = "POST">
         <div class="form-group mb-3">
-          <label for="CName" class="form-label">Name</label>
-          <input autofocus="autofocus" type="text" class="form-control" name = "name" id="CName" aria-describedby="emailHelp" placeholder="Name : John Doe">
+          <label for="USERNAME" class="form-label">Name</label>
+          <input autofocus="autofocus" type="text" class="form-control" name = "USERNAME" id="USERNAME" placeholder="Name : John Doe">
         </div>
         <div class="form-group mb-3">
-          <label for="CEmail" class="form-label">Email</label>
-          <input type="email" class="form-control" name = "email" id="CEmail" aria-describedby="emailHelp" placeholder="johndoe@gmail.com">
+          <label for="EMAIL" class="form-label">Email</label>
+          <input type="EMAIL" class="form-control" name = "EMAIL" id="EMAIL" placeholder="johndoe@gmail.com">
           <small>We won't share your email id</small>
-        </div>
-        <div class="form-group mb-3">
-          <label for="CPassword">Password</label>
-          <input type="password" class="form-control" name = "pass" id="CPassword" placeholder="Password">
         </div>
          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <div class="alert alert-primary my-3" role="alert" >
