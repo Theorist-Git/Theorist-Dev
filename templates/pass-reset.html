@@ -14,7 +14,7 @@
         </div>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <div class="alert alert-primary my-3" role="alert" >
-          Greeting, Traveller!
+          Greetings, Traveller!
         </div>
         <button type="submit" id = "s_ubmit" class="btn btn-primary">Submit</button>
 
@@ -43,4 +43,10 @@
             window.history.forward();
         }
 </script>
+<style>
+    .container
+    {
+       color: #fff !important;
+    }
+</style>
 {% endblock content %}

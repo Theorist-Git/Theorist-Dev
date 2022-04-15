@@ -551,5 +551,6 @@ def delete():
         logout_user()
         for key in list(session.keys()):
             session.pop(key)
-        return redirect(url_for('auth.home'))
+        flash("Account deleted successfully")
+        return redirect(url_for('auth.login'))
     return render_template('delete.html', user=current_user)

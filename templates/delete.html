@@ -4,16 +4,44 @@
 {% if current_user.role != "admin" %}
 <div class = "container my-3">
       <h2>Deletion</h2>
-      <form action = "/delete" method = "POST" onSubmit="return confirm('Are you sure you wish to delete?');">
         <div class="alert alert-primary my-3" role="alert" >
-          Greeting, Traveller! Ask, and you shall receive
+          Farewell?
         </div>
-        <button type="submit" id = "submit" class="btn btn-primary">Press to delete your account</button>
+        <button type="submit" id = "submit" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">Press to delete your account</button>
         <div class="alert alert-danger my-3" role="alert" >
           This deletion is permanent, please proceed with caution
         </div>
-         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-      </form>
+        <!-- Modal -->
+        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                Are you sure you want to delete your <b>Account</b> and its <b>associated data permanently</b>?
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <form action = "/delete" method = "POST">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="btn btn-danger">Delete Account</button>
+              </form>
+              </div>
+            </div>
+          </div>
+        </div>
 </div>
+<style>
+    .container
+    {
+       color: #fff !important;
+    }
+    .modal
+    {
+      color: #000
+    }
+</style>
 {% endif %}
 {% endblock content %}
