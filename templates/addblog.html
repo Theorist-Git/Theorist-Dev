@@ -11,8 +11,6 @@
         </div>
         <div class = "container my-3">
             <textarea id = "editor" name = "editor" class="tinymce"></textarea>
-            <!-- javascript -->
-<!--            <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>-->
             <script type="text/javascript" src="static/plugin/tinymce/js/tinymce/tinymce.min.js"></script>
             <script type="text/javascript" src="static/plugin/tinymce/js/tinymce/init-tinymce.js"></script>
         </div>
@@ -47,4 +45,10 @@
          {% endif %}
         {% endwith %}
 </div>
+<style>
+    .container
+    {
+       color: #fff !important;
+    }
+</style>
 {% endblock content %}

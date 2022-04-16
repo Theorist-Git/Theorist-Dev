@@ -146,8 +146,8 @@ def feedback():
     return render_template("feedback.html")
 
 
-@login_required
 @views.route('/apply', methods=['GET', 'POST'])
+@login_required
 def apply():
     if request.method == "POST":
         session['apply_email'] = current_user.email

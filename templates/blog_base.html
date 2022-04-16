@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<div class="main mx-5 my-3" style = "font-family:arial;">
+<div class="main mx-5 my-3" style="background-color: #fff">
 <div class="main mx-2 my-5" style="border:1px solid black;" id="blogbox">
 <div class="mx-3 my-5">
 {% block blog %}
@@ -11,7 +11,7 @@
 </div>
 <!-- Main Body -->
 {% if current_user.is_authenticated %}
-<div style="background-color: #000000">
+<div>
 <section id="comms">
     <div class="container">
         <div class="row">
@@ -191,12 +191,7 @@ form {
       window.history.replaceState( null, null, window.location.href );
     }
 </script>
-<link rel="stylesheet"
-      href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/atom-one-dark-reasonable.min.css">
-<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
-<script>document.addEventListener('DOMContentLoaded', (event) => {
-  document.querySelectorAll('code').forEach((el) => {
-    hljs.highlightElement(el);
-  });
-});</script>
+<link rel="stylesheet" href="/static/css/atom-one-dark.min.css">
+<script src="/static/JavaScript/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
 {% endblock content %}

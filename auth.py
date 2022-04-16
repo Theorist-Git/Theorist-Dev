@@ -90,7 +90,7 @@ def create():
     if not request.referrer:  # 'request.referrer' is 'None' when redirected through an HTML <meta> tag.
         for key in list(session.keys()):
             session.pop(key)
-        flash(message="Session and OTP have expired, Please refresh the page!", category="error")
+        flash(message="Session or OTP has expired, Please Login again!", category="error")
     if request.method == 'POST':
         session['NAME'] = request.form['USERNAME']
         session['EMAIL'] = request.form['EMAIL']
@@ -214,7 +214,7 @@ def login():
     if not request.referrer:
         for key in list(session.keys()):
             session.pop(key)
-        flash(message="Session and OTP have expired, Please refresh the page!", category="error")
+        flash(message="Session or OTP has expired, Please Login again!", category="error")
     if request.method == 'POST':
         session['EMAIL'] = request.form['EMAIL']
         PASSWORD = request.form['PASSWORD']
@@ -338,7 +338,7 @@ def secrets():
             del session['COMP_OTP']
         except KeyError:
             pass
-        flash(message="Session and OTP have expired, Please try again!", category="error")
+        flash(message="Session or OTP has expired, Please Login again!", category="error")
     return render_template("secrets.html", user=current_user)
 
 
@@ -441,7 +441,7 @@ def forgot_pass():
     if not request.referrer:
         for key in list(session.keys()):
             session.pop(key)
-        flash(message="Session and OTP have expired, Please try again!", category="error")
+        flash(message="Session or OTP has expired, Please Login again!", category="error")
     if referrer:
         if referrer[21:] in auth_href:
             if request.method == 'POST':

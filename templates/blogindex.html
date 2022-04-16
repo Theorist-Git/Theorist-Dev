@@ -1,77 +1,33 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>Citadel Blog</title>
-
-    <!-- Meta -->
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Blog Template">
-    <meta name="template author" content="Xiaoying Riley at 3rd Wave Media">
-    <link rel="shortcut icon" href="/static/favicon.ico">
-
-    <!-- FontAwesome JS-->
-	<script defer src="/static/assets/fontawesome/js/all.min.js"></script>
-
-    <!-- Theme CSS -->
-    <link id="theme-style" rel="stylesheet" href="/static/assets/css/theme-6.css">
-
-</head>
-
-<body>
-
-    <header class="header text-center">
-	    <h1 class="blog-name pt-lg-4 mb-0"><a href="/" class="badge badge-dark">Citadel Coding</a></h1>
-
-	    <nav class="navbar navbar-expand-lg navbar-dark" >
-
-			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navigation" aria-controls="navigation" aria-expanded="false" aria-label="Toggle navigation">
-			<span class="navbar-toggler-icon"></span>
-			</button>
-
-			<div id="navigation" class="collapse navbar-collapse flex-column" >
-				<div class="profile-section pt-3 pt-lg-0">
-				    <img class="profile-image mb-3 rounded-circle mx-auto" src="/static/castle.png" alt="image" >
-
-					<div class="bio mb-3">Designed and built with all the love in the world by <a href="https://github.com/Theorist-Git">Mayank Vats</a>
-						<br><a href="/about">About The Website</a></div><!--//bio-->
-					<ul class="social-list list-inline py-3 mx-auto">
-			            <li class="list-inline-item"><a href="https://twitter.com/Theoris91022893"><i class="fab fa-twitter fa-fw"></i></a></li>
-<!--			            <li class="list-inline-item"><a href="#"><i class="fab fa-linkedin-in fa-fw"></i></a></li>-->
-			            <li class="list-inline-item"><a href="https://github.com/Theorist-Git"><i class="fab fa-github-alt fa-fw"></i></a></li>
-			            <li class="list-inline-item"><a href="https://stackoverflow.com/users/13748961/mayank"><i class="fab fa-stack-overflow fa-fw"></i></a></li>
-			        </ul><!--//social-list-->
-			        <hr>
-				</div><!--//profile-section-->
-
-				<ul class="navbar-nav flex-column text-left">
-					<li class="nav-item active">
-					    <a class="nav-link" href="/"><i class="fas fa-home fa-fw mr-2"></i>Home <span class="sr-only">(current)</span></a>
-					</li>
-					<li class="nav-item">
-					    <a class="nav-link" href="/addblog"><i class="fas fa-bookmark fa-fw mr-2"></i>Make Blog Posts</a>
-					</li>
-					<li class="nav-item">
-					    <a class="nav-link" href="/about"><i class="fas fa-user fa-fw mr-2"></i>About</a>
-					</li>
-				</ul>
-			</div>
-		</nav>
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <header class="d-flex justify-content-center py-3">
+      <ul class="nav nav-pills">
+        <li class="nav-item mx-1"><a href="#" class="nav-link active" aria-current="page">Repositories</a></li>
+        {% if current_user.role == "admin" or current_user.role == "author" %}
+            <li class="nav-item mx-1"><a href="/addblog" class="nav-link active">Write a Blog</a></li>
+        {% else %}
+        	<li class="nav-item mx-1"><a href="/apply" class="nav-link active">Apply to be an Author</a></li>
+		{% endif %}
+        <li class="nav-item mx-1"><a href="#" class="nav-link active">FAQs</a></li>
+      </ul>
     </header>
+  </div>
+    <div class="container">
 
-    <div class="main-wrapper">
-	    <section class="cta-section theme-bg-light py-5">
-		    <div class="container text-center">
-			    <h2 class="heading">CitadelBlog - A blog for everything software</h2>
-			    <form method="POST" action="/blogindex" class="form-inline my-2 my-lg-0 justify-content-center pt-3">
+	    <section class="cta-section theme-bg-dark py-5">
+		    <div class="container">
+			    <h2 align="center" class="heading">ArcisBlog - A blog for everything software</h2>
+			    <form method="POST" action="/blogindex" class="form-inline">
 				  <input name="search_query" class="form-control mr-sm-2" type="search" placeholder="Search for blogs that you might enjoy" aria-label="Search">
 				  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-				  <button class="btn btn-success my-2 my-sm-0" type="submit">Search</button>
+					<div class="my-2" style="text-align:center">
+				  <button class="btn-lg btn-success my-2 my-sm-0" type="submit">Search</button>
+					</div>
 				</form>
 		    </div><!--//container-->
 	    </section>
-	    <section class="blog-list px-3 py-5 p-md-5">
+	    <section class="blog-list py-5 p-md-5">
 			{% if data|length != 0 %}
 				{% for i in data %}
 					<div class="container">
@@ -89,19 +45,17 @@
 						</button>
 						<div class="item mb-5">
 							<div class="media">
-								<img class="mr-3 img-fluid post-thumb d-none d-md-flex" src="https://source.unsplash.com/300x300/?coding, {{ i }}" alt="image">
 								<div class="media-body">
 									<h3 class="title mb-1"><a href= "{{ i.href }}">{{ i.data }}</a></h3>
 									<div class="meta mb-1">
-										<span class="date">{{ i.date }}</span><span class="time">{{ i.time }} minute read</span><span class="text">Author: {{ i.author }}</span>
-<!--										<span class="comment"><a href="#">8 comments</a></span>-->
+										<span style="color:grey" class="date">{{ i.date }}</span><b>&nbsp;•&nbsp;</b><span style="color:grey" class="time">{{ i.time }} minute read</span><b>&nbsp;•&nbsp;</b><span style="color:grey" class="text">Author: {{ i.author }}</span>
 									</div>
 									<div class="intro">{{ i.desc }}</div>
 									<a class="more-link" href="{{ i.href }}">Read more &rarr;</a>
 								</div><!--//media-body-->
 							</div><!--//media-->
 						</div><!--//item-->
-						<hr>
+						<hr style="height:4px">
 					</div>
 				{% endfor %}
 			{% else %}
@@ -135,22 +89,12 @@
 		</div>
 
 	    <footer class="footer text-center py-2 theme-bg-dark">
-
-	        <!--/* This template is free as long as you keep the footer attribution link. If you'd like to use the template without the attribution link, you can buy the commercial license via our website: themes.3rdwavemedia.com Thank you for your support. :) */-->
-            <small class="copyright">Template Designed with <i class="fas fa-heart" style="color: #fb866a;"></i> by <a href="http://themes.3rdwavemedia.com" target="_blank">Xiaoying Riley</a> for developers</small>
-
-	    </footer>
-
-    </div><!--//main-wrapper-->
-
-    <!-- Javascript -->
-	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
-	<script>
-		if ( window.history.replaceState ) {
-		  window.history.replaceState( null, null, window.location.href );
-		}
-	</script>
-
-</body>
-</html>
+		</footer>
+	</div>
+<style>
+    .container
+    {
+       color: #fff;
+    }
+</style>
+{% endblock content %}
