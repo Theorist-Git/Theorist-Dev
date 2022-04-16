@@ -19,9 +19,14 @@ from flask_login import current_user
 
 # creating an instance of blueprint class for docs.py, later to be registered in the app.
 
-docs = Blueprint('docs', __name__, static_folder="static")
+docs = Blueprint('docs', __name__)
+
+
+@docs.route("/Machine-Learning", methods=['GET', 'POST'])
+def ml_index():
+    return render_template("ML_Index.html", user=current_user)
 
 
 @docs.route("/Cryptography", methods=['GET', 'POST'])
-def cryptography_docs():
-    return render_template("Cryptography-Docs.html", user=current_user)
+def crypt_index():
+    return render_template("crypt_Index.html", user=current_user)

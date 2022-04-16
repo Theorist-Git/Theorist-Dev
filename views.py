@@ -169,7 +169,7 @@ def apply():
     return render_template("apply.html", current_user=current_user)
 
 
-@views.route('/Projects', methods=['GET', 'POST'])
+@views.route('/projects', methods=['GET', 'POST'])
 def modelindex():
     return render_template('modelindex.html')
 
