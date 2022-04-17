@@ -3,7 +3,7 @@
 <div class="container">
     <header class="d-flex justify-content-center py-3">
       <ul class="nav nav-pills">
-        <li class="nav-item mx-1"><a href="#" class="nav-link active" aria-current="page">Repositories</a></li>
+        <li class="nav-item mx-1"><a href="https://github.com/Theorist-Git/" class="nav-link active" aria-current="page">Repositories</a></li>
         {% if current_user.role == "admin" or current_user.role == "author" %}
             <li class="nav-item mx-1"><a href="/addblog" class="nav-link active">Write a Blog</a></li>
         {% else %}
@@ -19,8 +19,10 @@
 		    <div class="container">
 			    <h2 align="center" class="heading">ArcisBlog - A blog for everything software</h2>
 			    <form method="POST" action="/blogindex" class="form-inline">
+				<div class="container">
 				  <input name="search_query" class="form-control mr-sm-2" type="search" placeholder="Search for blogs that you might enjoy" aria-label="Search">
 				  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+				</div>
 					<div class="my-2" style="text-align:center">
 				  <button class="btn-lg btn-success my-2 my-sm-0" type="submit">Search</button>
 					</div>
