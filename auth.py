@@ -20,17 +20,16 @@ from werkzeug.exceptions import abort
 from website import db
 from datetime import datetime
 from website.models import User, Post, Comment
-from website.tert import OTPMethods, ElectronicMail
+from website.tert import TwoFactorAuth, ElectronicMail
 from AuthAlpha import PassHashing
 
 # creating an instance of blueprint class for auth.py, later to be registered in the app.
 auth = Blueprint('auth', __name__)
 
-rn_jesus = OTPMethods()
+crypt = TwoFactorAuth()
 postman = ElectronicMail()
 password_police = PassHashing("argon2id")
 otp_police = PassHashing("pbkdf2:sha256")
-
 
 """
 i)Referrer:
@@ -57,7 +56,6 @@ def apply_caching(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-XSS-Protection'] = '1; mode=block'
-    print(session)
     return response
 
 
@@ -152,7 +150,7 @@ def otp():
     if referrer:
         if referrer[21:] in auth_href:
             if request.method == 'GET':
-                COMP_OTP = rn_jesus.return_random(otp_len=6)
+                COMP_OTP = crypt.static_otp(otp_len=6)
                 postman.sendmail(session['EMAIL'],
                                  "ArcisCoding Email Verification",
                                  COMP_OTP,
@@ -217,26 +215,13 @@ def login():
         flash(message="Session or OTP has expired, Please Login again!", category="error")
     if request.method == 'POST':
         session['EMAIL'] = request.form['EMAIL']
-        PASSWORD = request.form['PASSWORD']
         user = User.query.filter_by(email=session['EMAIL']).first()
         if user:
-            if not user.two_FA:
-                if password_police.check_password_hash(user.password, PASSWORD):
-                    login_user(user, remember=False)
-                    user.active = True
-                    user.last_confirmed_at = datetime.now()
-                    db.session.commit()
-                    session.permanent = True
-                    return redirect(url_for('auth.secrets'))
-                else:
-                    flash('Incorrect password, try again.', category='error')
-            else:
-                if password_police.check_password_hash(user.password, PASSWORD):
-                    return redirect(url_for('auth.mfa_login'))
-                else:
-                    flash('Incorrect password, try again.', category='error')
+            session['2FA_STATUS'] = [user.two_FA, user.two_FA_type]
+            return redirect(url_for('auth.mfa_login'))
         else:
             flash('Email does not exist.', category='error')
+            return redirect(url_for('auth.create'))
 
     return render_template("login.html", user=current_user)
 
@@ -281,30 +266,63 @@ def mfa_login():
     ]
     if referrer:
         if referrer[21:] in auth_href:
+            user = User.query.filter_by(email=session['EMAIL']).first()
             if request.method == 'GET':
-                COMP_OTP = rn_jesus.return_random(otp_len=6)
-                postman.sendmail(session['EMAIL'],
-                                 "CitadelCoding Log-in Authorization",
-                                 COMP_OTP)
-                session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
+                if session['2FA_STATUS'][0] and session['2FA_STATUS'][1] == "EMAIL":
+                    COMP_OTP = crypt.static_otp(otp_len=6)
+                    postman.sendmail(session['EMAIL'],
+                                     "CitadelCoding Log-in Authorization",
+                                     COMP_OTP)
+                    session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
             if request.method == 'POST':
-                USER_OTP = request.form['OTP']
-                if otp_police.check_password_hash(session['COMP_OTP'], USER_OTP):
-                    del session['COMP_OTP']
-                    user = User.query.filter_by(email=session['EMAIL']).first()
-                    login_user(user, remember=False)
-                    user.active = True
-                    user.last_confirmed_at = datetime.now()
-                    db.session.commit()
-                    session.permanent = True
-                    return redirect(url_for('auth.secrets'))
+                if session['2FA_STATUS'][0] and session['2FA_STATUS'][1] == "EMAIL":
+                    PASSWORD = request.form['PASSWORD']
+                    USER_OTP = request.form['OTP-EMAIL']
+                    if otp_police.check_password_hash(session['COMP_OTP'], USER_OTP) and password_police.check_password_hash(user.password, PASSWORD):
+                        del session['COMP_OTP']
+                        del session['2FA_STATUS']
+                        login_user(user, remember=False)
+                        user.active = True
+                        user.last_confirmed_at = datetime.now()
+                        db.session.commit()
+                        session.permanent = True
+                        return redirect(url_for('auth.secrets'))
+                    else:
+                        flash('Wrong OTP or Password', category='error')
+                elif session['2FA_STATUS'][0] and session['2FA_STATUS'][1] == "TOTP":
+                    PASSWORD = request.form['PASSWORD']
+                    USER_OTP = request.form['OTP-TOTP']
+                    try:
+                        token = crypt.decrypt(PASSWORD.encode('utf-8'), user.two_FA_key)
+                        if crypt.verify(str(token), USER_OTP) and password_police.check_password_hash(user.password,
+                                                                                                      PASSWORD):
+                            del session['2FA_STATUS']
+                            login_user(user, remember=False)
+                            user.active = True
+                            user.last_confirmed_at = datetime.now()
+                            db.session.commit()
+                            session.permanent = True
+                            return redirect(url_for('auth.secrets'))
+                        else:
+                            flash('Incorrect password or otp, try again.', category='error')
+                    except ValueError:
+                        flash('Incorrect password or otp, try again.', category='error')
                 else:
-                    flash('Wrong otp', category='error')
+                    PASSWORD = request.form['PASSWORD']
+                    if password_police.check_password_hash(user.password, PASSWORD):
+                        login_user(user, remember=False)
+                        user.active = True
+                        user.last_confirmed_at = datetime.now()
+                        db.session.commit()
+                        session.permanent = True
+                        return redirect(url_for('auth.secrets'))
+                    else:
+                        flash('Incorrect password, try again.', category='error')
         else:
             abort(403)
     else:
         abort(403)
-    return render_template("mfa-login.html", email=session['EMAIL'])
+    return render_template("mfa-login.html", email=session['EMAIL'], two_fa=session['2FA_STATUS'])
 
 
 @auth.route('/logout')
@@ -339,6 +357,16 @@ def secrets():
         except KeyError:
             pass
         flash(message="Session or OTP has expired, Please Login again!", category="error")
+    if request.method == "POST":
+        if request.form['submit'] == 'EMAIL-OTP':
+            user = User.query.filter_by(email=current_user.email).first()
+            user.two_FA = True
+            user.two_FA_type = "EMAIL"
+            db.session.commit()
+            flash("2FA enabled!", category="success")
+        elif request.form['submit'] == 'TOTP':
+            return redirect(url_for("auth.two_fa"))
+
     return render_template("secrets.html", user=current_user)
 
 
@@ -371,28 +399,27 @@ def two_fa():
     if referrer:
         if referrer[21:] in auth_href:
             if request.method == 'GET':
-                COMP_OTP = rn_jesus.return_random(otp_len=6)
-                postman.sendmail(current_user.email,
-                                 "CitadelCoding Two-Factor-Authentication",
-                                 COMP_OTP,
-                                 use_case="Enable_2FA")
-                session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
+                secret = crypt.totp(name=current_user.email)
             if request.method == 'POST':
+                token = request.form['SECRET']
                 USER_OTP = request.form['OTP']
-                if otp_police.check_password_hash(session['COMP_OTP'], USER_OTP):
-                    del session['COMP_OTP']
-                    user = User.query.filter_by(email=current_user.email).first()
+                PASSWORD = request.form['PASSWORD']
+                user = User.query.filter_by(email=current_user.email).first()
+                if crypt.verify(token, USER_OTP) and password_police.check_password_hash(user.password, PASSWORD):
                     user.two_FA = True
+                    user.two_FA_key = crypt.encrypt(PASSWORD.encode('utf-8'), token.encode('utf-8'))
+                    user.two_FA_type = "TOTP"
                     db.session.commit()
                     flash('2FA enabled', category='success')
                     return redirect(url_for('auth.secrets'))
                 else:
-                    flash('Wrong otp', category='error')
+                    flash('Wrong otp or Password. Key has changed!', category='error')
+                    return redirect(url_for('auth.two_fa'))
         else:
             abort(403)
     else:
         abort(403)
-    return render_template("two-FA.html", user=current_user)
+    return render_template("two-FA.html", user=current_user, secret=secret)
 
 
 @auth.route('/disable2FA')
@@ -406,6 +433,8 @@ def disable2fa():
     """
     user = User.query.filter_by(email=current_user.email).first()
     user.two_FA = False
+    user.two_FA_key = None
+    user.two_FA_type = None
     db.session.commit()
     flash('2FA disabled', category='error')
     return redirect(url_for('auth.secrets'))
@@ -476,7 +505,7 @@ def otp_check():
     if referrer:
         if referrer[21:] in auth_href:
             if request.method == 'GET':
-                COMP_OTP = rn_jesus.return_random(otp_len=6)
+                COMP_OTP = crypt.static_otp(otp_len=6)
                 postman.sendmail(session['EMAIL'],
                                  "CitadelCoding Password Reset",
                                  COMP_OTP,
@@ -519,6 +548,9 @@ def pass_reset():
                 if password_police.check_password_hash(PASSWORD, check_password):
                     user = User.query.filter_by(email=session['EMAIL']).first()
                     user.password = PASSWORD
+                    user.two_FA = 0
+                    user.two_FA_key = None
+                    user.two_FA_type = None
                     db.session.commit()
                     flash('Password changed successfully!', category='success')
                     return redirect(url_for('auth.secrets'))

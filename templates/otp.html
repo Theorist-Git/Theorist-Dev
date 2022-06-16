@@ -10,7 +10,16 @@
         </div>
         <div class="form-group mb-3">
           <label for="PASSWORD">Password</label>
-          <input type="password" class="form-control" name = "PASSWORD" id="PASSWORD" placeholder="Password">
+          <input type="password" pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*_=+-]).{8,128}$" class="form-control" name = "PASSWORD" id="PASSWORD" placeholder="Password">
+        </div>
+        <div class="form-group mb-3">
+            Your Password must have:
+            <ul>
+                <li>At least 1 Uppercase character</li>
+                <li>At least 1 lowercase character</li>
+                <li>At least 1 Special Symbol</li>
+                <li>Min. 8 chars and Max. 128 characters</li>
+            </ul>
         </div>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <button id = "otpsub" type="submit" class="btn btn-primary">Submit OTP</button>

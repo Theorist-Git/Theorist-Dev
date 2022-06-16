@@ -21,10 +21,10 @@ from werkzeug.exceptions import abort
 from .models import Post, Comment
 from . import db
 import os
-from website.tert import OTPMethods, ElectronicMail, Misc
+from website.tert import TwoFactorAuth, ElectronicMail, Misc
 
 views = Blueprint('views', __name__)
-otp_gen = OTPMethods()
+crypt = TwoFactorAuth()
 postman = ElectronicMail()
 misc = Misc()
 
@@ -55,7 +55,7 @@ def addblog():
             for i in session['title']:
                 if i.isalpha():
                     final_title += i
-            session['blog_name'] = final_title[:10].replace(' ', '') + otp_gen.return_random(otp_len=8)
+            session['blog_name'] = final_title[:10].replace(' ', '') + crypt.static_otp(otp_len=8)
 
             if len(session['post']) < 1:
                 flash('post is too short!', category='error')

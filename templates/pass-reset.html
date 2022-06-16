@@ -6,18 +6,26 @@
       <form action = "/pass-reset" method = "POST">
         <div class="form-group mb-3">
           <label for="PASSWORD">Password</label>
-          <input autofocus="autofocus" type="PASSWORD" class="form-control" name = "PASSWORD" id="PASSWORD" placeholder="Password">
+          <input autofocus="autofocus" type="PASSWORD" pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*_=+-]).{8,128}$" class="form-control" name = "PASSWORD" id="PASSWORD" placeholder="Password">
         </div>
         <div class="form-group mb-3">
           <label for="C-PASSWORD">Confirm Password</label>
-          <input type="password" class="form-control" name = "C-PASSWORD" id="C-PASSWORD" placeholder="Confirm Password">
+          <input type="password" pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*_=+-]).{8,128}$" class="form-control" name = "C-PASSWORD" id="C-PASSWORD" placeholder="Confirm Password">
+        </div>
+        <div class="form-group mb-3">
+            Your Password must have:
+            <ul>
+                <li>At least 1 Uppercase character</li>
+                <li>At least 1 lowercase character</li>
+                <li>At least 1 Special Symbol</li>
+                <li>Min. 8 chars and Max. 128 characters</li>
+            </ul>
         </div>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <div class="alert alert-primary my-3" role="alert" >
           Greetings, Traveller!
         </div>
         <button type="submit" id = "s_ubmit" class="btn btn-primary">Submit</button>
-
         </form>
   <div class="container my-3">
         {% with messages = get_flashed_messages(with_categories=true) %}

@@ -27,13 +27,15 @@ class User(db.Model, UserMixin):
     User data.
     """
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(150))
-    password = db.Column(db.String(150))
-    email = db.Column(db.String(254), unique=True)
+    name = db.Column(db.String(128))
+    password = db.Column(db.String(128))
+    email = db.Column(db.String(256), unique=True)
     active = db.Column(db.Boolean)
     last_confirmed_at = db.Column(db.DateTime())
     two_FA = db.Column(db.Boolean, default=False, nullable=False)
-    role = db.Column(db.String(50), default="user", nullable=False)
+    two_FA_key = db.Column(db.String(128), default=None, nullable=True)
+    two_FA_type = db.Column(db.String(5), default=None, nullable=True)
+    role = db.Column(db.String(6), default="user", nullable=False)
     posts = db.relationship('Post')
 
 

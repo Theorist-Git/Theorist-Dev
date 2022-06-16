@@ -17,7 +17,11 @@
     <br>
     <div class="alert alert-danger" role="alert">
       Unfortunately, if you don't have access to your email-id, we can't do anything for you :c
+    </div><br>
+    <div class="alert alert-danger" role="alert">
+      Resetting your password will disable Two-Factor Authentication, you will have re-configure it.
     </div>
+
     <div class="container my-3">
         {% with messages = get_flashed_messages(with_categories=true) %}
          {% if messages %}
