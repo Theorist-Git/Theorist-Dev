@@ -14,7 +14,7 @@ from website.models import User, Post, Comment
 from website.tert import TwoFactorAuth, ElectronicMail
 from AuthAlpha import PassHashing
 
-# creating an instance of blueprint class for auth.py, later to be registered in the app.
+# creating an instance of blueprint class for auth.py, later to be registered in the app (see __init__.py).
 auth = Blueprint('auth', __name__)
 
 crypt = TwoFactorAuth()
@@ -24,20 +24,21 @@ otp_police = PassHashing("pbkdf2:sha256")
 
 """
 i)Referrer:
-Using request.referrer we are able to restrict user access to certain webpages (like OTP check pages).
-We create a list, namely 'auth_ref' with acceptable paths or 'referrals' to these webpages, only through
-these paths, the user can access these urls. Otherwise a 403 error is raised.
+request.referrer is used to restrict access to certain webpages (like OTP check pages).
+A list is created, namely 'auth_ref' which contains acceptable paths or 'referrals' to 
+these webpages, access to urls is dictated via these lists. Otherwise a 403 error is raised.
 
 ii)user=current_user:
-This is returned with the template rendered for a specific view for views that don't explicitly use it.
-This is on purpose, as we use it to Dynamically display user data (if user is not Anonymous) and is used to
-manage the display of certain features. Eg: Users with admin role don't have an option to delete account,
-it has to be done manually from database terminal (for security purposes).
+This is returned with the template rendered for a specific view even for views that don't explicitly use it.
+This is on purpose, as it is used to Dynamically display user data and is used to render certain features
+Eg: Users with admin role don't have an option to delete account, it has to be done manually from database 
+terminal (for security purposes).
 
 iii)Decorators:
--> @auth.route : Used to define routes and accepted method for views in auth.py
--> @login_required : Use to restrict access to certain views. These views are accessible only when the user
+-> @auth.route : Used to define routes and accepted request methods (POST/GET) for views in auth.py
+-> @login_required : Used to restrict access to certain views. These views are accessible only when the user
 is authenticated.
+-> @auth.after_request : Specifies a list of commands that are run after every request.
 """
 
 
@@ -64,15 +65,14 @@ def create():
     """
     Initiates the account creation process,
 
-    1.  To allow multiple users, data is stored in an AES encrypted session.
-        For more info see 'session_encryption.py'.
+    1.  Data (NAME, EMAIL and OTP hash) is stored in an AES encrypted session to maintain
+        data in between requests. For more info see 'session_encryption.py'.
 
     2.  After that using an instance of SQLALCHEMY() (db), we check if the e-mail id
         (Unique Primary Key) entered by the user already exists. If the checks are passed,
         the user is redirected to auth.otp.
 
-    /* P.S you don't need to worry about regex as it has already been implemented in the
-       'create.html' file. */
+    /* P.S Regex has already been implemented in the 'create.html' and 'otp.html' files. */
 
     :return: renders template 'create.html'
     """
@@ -106,13 +106,13 @@ def otp():
         stored in the encrypted session, to be used for verification of USER_OTP.
 
     3.  ('POST' request): A user can make a 'POST' request on this page to submit the OTP sent to
-        their e-mail, the hash of the USER_OTP is checked against the pre-known hash of the generated
-        OTP, if the user enters the correct OTP, the backend database comes into effect, also, as soon
-        as the OTP is verified, the key, 'COMP_OTP' is deleted from the session thus making them
-        usable only once, hence the name One Time Password.
+        their e-mail and set a password, the hash of the USER_OTP is checked against the pre-known
+        hash of the generated OTP, if the user enters the correct OTP, the backend database comes
+        into effect, also, as soon as the OTP is verified, the key, 'COMP_OTP' is deleted from the
+        session thus making them usable only once. The password is hashed using Argon2id with default
+        parameters.
 
-    4.  A password is now also submitted through this view so that the password is never-ever stored
-        in the session in plain-text or otherwise.
+    4.  The submitted password is never-ever stored anywhere without being hashed.
 
         /*
         P.S Again, these OTP hashes exist in the session never for more than 5 minutes.
@@ -176,7 +176,7 @@ def otp():
 @login_required
 def success():
     """
-    The page where the user is redirected on successful creation of account.
+    The page where the user is redirected on successful creation of an account.
 
     :return: renders template 'success.html'
     """
@@ -189,14 +189,13 @@ def login():
     This page logs the user in;
 
     1.  ('POST' request): The post request made by the user will contain an e-mail and a password
-        , the email is stored in the session while password is not.
+        , the email is stored in the session while the password is not.
 
-    2.  After this, the existence of user is checked, if returned 'True', it is checked if 2FA is
-        enabled on this account.
+    2.  After this, the existence of user is checked, if returned 'True', a session key '2FA_STATUS'
+        is created. This list contains whether the user has enabled 2FA and also type of 2FA
+        at indices 0 and 1 respectively. After this, the user is redirected to auth.mfa.
 
-    3.  When user.2FA (A boolean which stores the status of 2FA) is
-        i)  False: The user is logged in iff the password is correct.
-        ii) True:  User is redirected to 'auth.mfa_login'
+    3. If the user doesn't exist, they are redirected auth.create.
 
     :return: renders template login.html
     """
@@ -225,19 +224,32 @@ def mfa_login():
     1.  This view is only accessible through '/login' and associated referrals,
         and can persist refresh and 'POST' requests while on this page.
 
-    2.  ('GET' request): When this page is called through an authorised referrer, a random OTP
-        of length 6 is generated and is e-mailed to the previously stored object with session
-        key -> 'EMAIL' (session['EMAIL']). This OTP's pbkdf2:sha256 (50,000 rounds) hash is then
-        stored in the encrypted session, to be used for verification of USER_OTP.
+    2.  ('GET' request): When this page is called through an authorised referrer and if the
+        user has EMAIL type 2FA enabled a random OTP of length 6 is generated and is e-mailed
+        to the previously stored object with session key -> 'EMAIL' (session['EMAIL']).
+        This OTP's pbkdf2:sha256 (50,000 rounds) hash is then stored in the encrypted session,
+        to be used for verification of USER_OTP.
 
-    3.  ('POST' request): A user can make a 'POST' request on this page to submit the OTP sent to
-        their e-mail, the hash of the USER_OTP is checked against the pre-known hash of the generated
-        OTP, if the user enters the correct OTP, the user is logged-in, also, as soon as
-        the OTP is verified, both the keys, 'COMP_OTP' and 'USER_OTP' are deleted from the session
-        thus making them usable only once, hence the name One Time Password.
+    3.  ('POST' request):
+        (i) EMAIL type 2FA users:
+            The user makes a 'POST' request on this page to submit the OTP sent to their e-mail,
+            the hash of the USER_OTP is checked against the pre-known hash of the generated
+            OTP, if the user enters the correct OTP, they are logged-in, also, as soon as
+            the OTP is verified, both the keys, 'COMP_OTP' and 'USER_OTP' are deleted from the session
+            thus making them usable only once.
+
+        (ii) TOTP type 2FA users:
+            The user enters their password and an OTP generated by their app, their password,
+            if correct, is used to decrypt the shared secret stored in the database under column
+            "two_FA_key". This decrypted token is used to verify the validity of the OTP, if correct,
+            the user is logged-in.
+
+        (iii) Users with 2FA disabled:
+            They only have to enter their password, once validated, they are logged-in
 
     /*
     P.S Again, these 'COMP_OTP' hash exists in the session for never more than 5 minutes.
+        2FA_STATUS key is deleted as soon as the user logs-in.
     */
 
     :return: renders template 'mfa-login.html'
@@ -262,7 +274,7 @@ def mfa_login():
                 if session['2FA_STATUS'][0] and session['2FA_STATUS'][1] == "EMAIL":
                     COMP_OTP = crypt.static_otp(otp_len=6)
                     postman.sendmail(session['EMAIL'],
-                                     "CitadelCoding Log-in Authorization",
+                                     "ArcisCoding Log-in Authorization",
                                      COMP_OTP)
                     session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
             if request.method == 'POST':
@@ -299,6 +311,7 @@ def mfa_login():
                     except ValueError:
                         flash('Incorrect password or otp, try again.', category='error')
                 else:
+                    del session['2FA_STATUS']
                     PASSWORD = request.form['PASSWORD']
                     if password_police.check_password_hash(user.password, PASSWORD):
                         login_user(user, remember=False)
@@ -338,7 +351,8 @@ def logout():
 @login_required
 def secrets():
     """
-    Account overview page, gateway to enable 2FA.
+    Account overview page, gateway to enable 2FA. Users gets to choose between
+    EMAIL based 2FA and TOTP based 2FA
 
     :return: renders template 'secrets.html'
     """
@@ -375,10 +389,13 @@ def about():
 @login_required
 def two_fa():
     """
-    Only referable from '/secrets', on being called, emails two_FA_otp to the current user,
-    If the user POSTS the correct OTP, Two-Factor Authentication is enabled on their account,
-    now, they would have to enter an e-mailed otp to log-in. Can be disabled on the Account
-    Overview page ('secrets').
+    Only referable from '/secrets'
+    [I] 'GET' Request: A TOTP secret and its corresponding QR code is generated,
+        Any refresh/ wrong OTP or password POST changes the TOTP tokens.
+
+    [II] 'POST' Request: Using an authenticator app, the user enters their OTP and password
+        If the OTP and password are correct, user.2FA is flipped to True and the TOTP token
+        is encrypted with the user's password which is then stored in db.
 
     :return: renders template 'two-FA.html'
     """
@@ -439,42 +456,21 @@ def forgot_pass():
     It is implemented using the following three Views:
 
     [I]  forgot_pass : Here the user has to enter their registered email address.
-        This view is only accessible through /login and associated pages. If the
-        user posts a valid email address, They are redirected to /OTP-check.
+        If they post a valid email address, They are redirected to /OTP-check.
 
     :return: renders template 'forgot_pass.html'
     """
-    referrer = request.referrer
-    auth_href = [
-        "/login",
-        "/login?next=%2Flogout",
-        "/login?next=%2Faddblog",
-        "/login?next=%2Flogout",
-        "/login?next=%2Fsecrets",
-        "/login?next=%2Ftwo-FA",
-        "/login?next=%2Fsuccess",
-        "/login?next=%2Fdisable2FA",
-        "/login?next=%2Fdelete",
-        "/secrets",
-        "/forgot-pass"
-    ]
     if not request.referrer:
         for key in list(session.keys()):
             session.pop(key)
         flash(message="Session or OTP has expired, Please Login again!", category="error")
-    if referrer:
-        if referrer[21:] in auth_href:
-            if request.method == 'POST':
-                session['EMAIL'] = request.form['EMAIL']
-                user = User.query.filter_by(email=session['EMAIL']).first()
-                if user:
-                    return redirect(url_for('auth.otp_check'))
-                else:
-                    flash("No such user exists!", category='error')
+    if request.method == 'POST':
+        session['EMAIL'] = request.form['EMAIL']
+        user = User.query.filter_by(email=session['EMAIL']).first()
+        if user:
+            return redirect(url_for('auth.otp_check'))
         else:
-            abort(403)
-    else:
-        abort(403)
+            flash("No such user exists!", category='error')
     return render_template("forgot-pass.html")
 
 
@@ -498,7 +494,7 @@ def otp_check():
             if request.method == 'GET':
                 COMP_OTP = crypt.static_otp(otp_len=6)
                 postman.sendmail(session['EMAIL'],
-                                 "CitadelCoding Password Reset",
+                                 "ArcisCoding Password Reset",
                                  COMP_OTP,
                                  use_case="PassReset")
                 session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
@@ -522,7 +518,7 @@ def pass_reset():
     [III]pass_reset: Referable only from /OTP-Check. Here the user POSTS a new password,
         if the user role wasn't admin, their account is updated normally, accounts with admin
         roles will update but with role method overridden. After the updating, the user is
-        logged in with the aforementioned protocols.
+        logged in with the aforementioned protocols. Resetting password disables TOTP type 2FA.
 
     :return: renders template 'pass-reset.html'
     """
@@ -539,9 +535,10 @@ def pass_reset():
                 if password_police.check_password_hash(PASSWORD, check_password):
                     user = User.query.filter_by(email=session['EMAIL']).first()
                     user.password = PASSWORD
-                    user.two_FA = 0
-                    user.two_FA_key = None
-                    user.two_FA_type = None
+                    if user.two_FA_type == "TOTP":
+                        user.two_FA = 0
+                        user.two_FA_key = None
+                        user.two_FA_type = None
                     db.session.commit()
                     flash('Password changed successfully!', category='success')
                     return redirect(url_for('auth.secrets'))
