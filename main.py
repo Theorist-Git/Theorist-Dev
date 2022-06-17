@@ -1,19 +1,14 @@
 """
-Copyright (C) 2021 Mayank Vats
-See license.txt
-/* Copyright (C) Mayank Vats - All Rights Reserved
-* Unauthorized copying of any file, via any medium is strictly prohibited
-* Proprietary and confidential
-* Contact the author if you want to use it.
-* Feel free to use the static and template files
-* Written by Mayank Vats <testpass.py@gmail.com>, 2021
-*/
-If you have this file and weren't given access to it by
-the author, you're breaching copyright, delete this file
-immediately and contact the author on the aforementioned
-email address. Don't worry, you should be fine as long as you don't
-use or distribute this software.
+Copyright (C) Mayank Vats - All Rights Reserved
+Unauthorized copying of any file, via any medium is strictly prohibited
+Proprietary and confidential
+Written by Mayank Vats <testpass.py@gmail.com>, 2021-2022
 """
+
+import sys
+
+sys.path.append('C:\\Users\\mayan\\Desktop\\languages\\Python 3.9\\Projects\\WebDev\\Flask\\Citadel')
+
 from website import create_app
 import logging
 from waitress import serve
@@ -33,7 +28,7 @@ logging.basicConfig(filename='WebRecord.log', level=logging.INFO,
                     datefmt='%Y-%m-%d %H:%M:%S')
 
 if __name__ == '__main__':
-    print("Running at http://127.0.0.1:5000/ \n Copyright (C) 2021 Mayank Vats")
+    print("Running at http://127.0.0.1:5000/ \n Copyright (C) 2021-2022 Mayank Vats")
 
     def run_dev_server():
         """
@@ -53,4 +48,4 @@ if __name__ == '__main__':
         print('\033[1m', 'PRODUCTION SERVER', '\033[0m')
         serve(app, listen='127.0.0.1:5000', threads=10)
 
-    run_dev_server()
+    run_prod_server()
