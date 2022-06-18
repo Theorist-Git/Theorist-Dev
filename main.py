@@ -2,7 +2,7 @@
 Copyright (C) Mayank Vats - All Rights Reserved
 Unauthorized copying of any file, via any medium is strictly prohibited
 Proprietary and confidential
-Written by Mayank Vats <testpass.py@gmail.com>, 2021-2022
+Written by Mayank Vats <arciscoding.6h93t@simplelogin.co>, 2021-2022
 """
 
 import sys

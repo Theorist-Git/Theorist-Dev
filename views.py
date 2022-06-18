@@ -2,7 +2,7 @@
 Copyright (C) Mayank Vats - All Rights Reserved
 Unauthorized copying of any file, via any medium is strictly prohibited
 Proprietary and confidential
-Written by Mayank Vats <testpass.py@gmail.com>, 2021-2022
+Written by Mayank Vats <arciscoding.6h93t@simplelogin.co>, 2021-2022
 """
 
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session
@@ -24,7 +24,7 @@ misc = Misc()
 @login_required
 def addblog():
     """
-    Enable registered users to make blog posts, Powered by TinyMCE,
+    Enable registered users to make blog posts, TinyMCE is used as WYSIWYG editor,
     (see /static/plugin/tinymce). The WYSIWYG editor inherently escapes
     script characters providing protection against XSS attacks. The title
     entered by the user is first sanitized and an HTML file is saved under
@@ -179,7 +179,7 @@ def show_blog(_):
     """
     GENERIC FLASK VIEW TO HANDLE ALL NON-EXPLICITLY CODED VIEW REQUESTS:
     This enables the website's blog to function without re-loading everytime
-    a blog is posted. This view when passed a parameter check whether a post
+    a blog is posted. This view when passed a parameter checks whether a post
     like that exists in the database or not. If yes, it serves the blog, other-
     -wise raises 404 error.
 

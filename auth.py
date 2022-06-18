@@ -2,7 +2,7 @@
 Copyright (C) Mayank Vats - All Rights Reserved
 Unauthorized copying of any file, via any medium is strictly prohibited
 Proprietary and confidential
-Written by Mayank Vats <testpass.py@gmail.com>, 2021-2022
+Written by Mayank Vats <arciscoding.6h93t@simplelogin.co>, 2021-2022
 """
 
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session
@@ -311,7 +311,6 @@ def mfa_login():
                     except ValueError:
                         flash('Incorrect password or otp, try again.', category='error')
                 else:
-                    del session['2FA_STATUS']
                     PASSWORD = request.form['PASSWORD']
                     if password_police.check_password_hash(user.password, PASSWORD):
                         login_user(user, remember=False)
@@ -319,6 +318,7 @@ def mfa_login():
                         user.last_confirmed_at = datetime.now()
                         db.session.commit()
                         session.permanent = True
+                        del session['2FA_STATUS']
                         return redirect(url_for('auth.secrets'))
                     else:
                         flash('Incorrect password, try again.', category='error')
