@@ -1,67 +1,72 @@
 {% extends 'base.html' %}
 {% block content %}
-<meta http-equiv = "refresh" content = "300; url = /login" />
-<div class = "container my-3">
+
+<meta http-equiv="refresh" content="300; url = /login" />
+<div class="container my-3">
     {% if two_fa[0] %}
-        <h2>Enter Password and OTP</h2>
+    <h2>Enter Password and OTP</h2>
     {% else %}
-        <h2>Enter Password</h2>
+    <h2>Enter Password</h2>
     {% endif %}
-      <form action = "/mfa-login" method = "POST">
-       <div class="form-group mb-3">
-          <label for="PASSWORD">Password</label>
-          <input autofocus="autofocus" type="password" class="form-control" name = "PASSWORD" id="PASSWORD" placeholder="Password">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-       </div>
-      {% if two_fa[0] and two_fa[1] == "EMAIL"%}
+    <form action="/mfa-login" method="POST">
+        <div class="form-group mb-3">
+            <label for="PASSWORD">Password</label>
+            <input autofocus="autofocus" type="password" class="form-control" name="PASSWORD" id="PASSWORD" placeholder="Password" />
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        </div>
+        {% if two_fa[0] and two_fa[1] == "EMAIL"%}
         <h3>OTP has been sent to {{ email }}</h3>
         <div class="mb-3">
-          <label for="OTP-EMAIL" class="form-label">OTP</label>
-          <input autofocus="autofocus" type="password" class="form-control" name = "OTP-EMAIL" id="OTP-EMAIL" aria-describedby="emailHelp" placeholder="Enter otp sent to your email, valid for 5 minutes">
+            <label for="OTP-EMAIL" class="form-label">OTP</label>
+            <input autofocus="autofocus" type="password" class="form-control" name="OTP-EMAIL" id="OTP-EMAIL" aria-describedby="emailHelp" placeholder="Enter otp sent to your email, valid for 5 minutes" />
         </div>
-      {% endif %}
-      {% if two_fa[0] and two_fa[1] == "TOTP"%}
+        {% endif %} {% if two_fa[0] and two_fa[1] == "TOTP"%}
         <h3>Enter OTP from your Authenticator app</h3>
         <div class="mb-3">
-          <label for="OTP-TOTP" class="form-label">OTP</label>
-          <input autofocus="autofocus" type="password" class="form-control" name = "OTP-TOTP" id="OTP-TOTP" aria-describedby="emailHelp" placeholder="OTP">
+            <label for="OTP-TOTP" class="form-label">OTP</label>
+            <input autofocus="autofocus" type="password" class="form-control" name="OTP-TOTP" id="OTP-TOTP" aria-describedby="emailHelp" placeholder="OTP" />
         </div>
-      {% endif %}
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-        <button id = "otp-sub" type="submit" class="btn btn-primary">Submit</button>
-        <div class="alert alert-primary my-3" role="alert" >
-          Greetings, Traveller!
+        {% endif %}
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button id="otp-sub" type="submit" class="btn btn-primary">Submit</button>
+        <div class="alert alert-primary my-3" role="alert">
+            Greetings, Traveller!
         </div>
+    </form>
 
-      </form>
-    <div class="container my-3">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-         {% if messages %}
-               {% for category, message in messages %}
-                    {% if category == 'error' %}
-                        <div class="alert alert-danger" role="alert">
-                        {{ message }}
-                        </div>
-                    {% else %}
-                        <div class="alert alert-success" role="alert">
-                        {{ message }}
-                        </div>
-                    {% endif %}
-               {% endfor %}
-         {% endif %}
-        {% endwith %}
-        </div>
+    <!-- JINJA to display flashed messages -->
+	<div class="container my-3">
+		{% with messages = get_flashed_messages(with_categories=true) %}
+			{% if messages %}
+				{% for category, message in messages %}
+					{% if category == 'error' %}
+						<div class="alert alert-danger" role="alert">
+						{{ message }}
+						</div>
+					{% else %}
+						<div class="alert alert-success" role="alert">
+						{{ message }}
+						</div>
+					{% endif %}
+				{% endfor %}
+			{% endif %}
+		{% endwith %}
+	</div>
 </div>
+
+<!-- Disables back button -->
 <script type="text/javascript">
+    window.history.forward();
+    function noBack() {
         window.history.forward();
-        function noBack() {
-            window.history.forward();
-        }
+    }
 </script>
+
+<!-- Enabling Dark Mode -->
 <style>
-    .container
-    {
-       color: #fff !important;
+    .container {
+        color: #fff !important;
     }
 </style>
+
 {% endblock content %}

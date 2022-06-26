@@ -4,194 +4,205 @@
 <div class="main mx-5 my-3" style="background-color: #fff">
 <div class="main mx-2 my-5" style="border:1px solid black;" id="blogbox">
 <div class="mx-3 my-5">
+
 {% block blog %}
+<!-- All blogs inject their HTML here -->
 {% endblock blog %}
+
 </div>
 </div>
 </div>
+
 <!-- Main Body -->
 {% if current_user.is_authenticated %}
 <div>
-<section id="comms">
-    <div class="container">
-        <div class="row">
-            <div class="my-5">
-                <form action = {{tdata}}#comms method = "POST" id="algin-form">
-                    <div class="form-group">
-                        <h4 id="head1">Leave a comment</h4> <label>Message</label> <textarea name="msg" id="msg" cols="30" rows="5"
-                         class="form-control" style="background-color: white;"></textarea>
-                    </div>
-                    <div> <label>Name: &emsp; {{current_user.name}}</label></div>
-                    <div> <label>Email: &emsp; {{current_user.email}}</label></div>
+    <section id="comms">
+        <div class="container">
+            <div class="row">
+                <div class="my-5">
+                    <form action="{{tdata}}#comms" method="POST" id="algin-form">
+                        <div class="form-group">
+                            <h4 id="head1">Leave a comment</h4>
+                            <label>Message</label> <textarea name="msg" id="msg" cols="30" rows="5" class="form-control" style="background-color: white;"></textarea>
+                        </div>
+                        <div><label>Name: &emsp; {{current_user.name}}</label></div>
+                        <div><label>Email: &emsp; {{current_user.email}}</label></div>
 
-                    <div class="form-group">
-                        <p class="text-secondary">If you wish, you can sub to our <a href="/404" class="alert-link">
-                        Newsletter</a></p>
-                    </div>
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    <button type="submit" id = "s_ubmit" class="btn btn-primary btn-lg btn-block">Submit</button>
-                </form>
-            </div>
-            {% if comments |length != 0 %}
+                        <div class="form-group">
+                            <p class="text-secondary">If you wish, you can sub to our <a href="/404" class="alert-link"> Newsletter</a></p>
+                        </div>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        <button type="submit" id="s_ubmit" class="btn btn-primary btn-lg btn-block">Submit</button>
+                    </form>
+                </div>
+                {% if comments |length != 0 %}
                 <div class="my-4">
                     <h1 id="head2">Comments</h1>
                     {% for i in comments %}
                     <div class="comment col-12 my-3">
-                        <h4 id="head3">{{ i.name }}</h4> <span>- {{ i.date }}</span> <br>
+                        <h4 id="head3">{{ i.name }}</h4>
+                        <span>- {{ i.date }}</span> <br />
                         <p>{{ i.data }}</p>
                     </div>
                     {% endfor %}
                 </div>
-            {% endif %}
-
+                {% endif %}
+            </div>
         </div>
-    </div>
-</section>
+    </section>
 </div>
 {% endif %}
 <style>
-  @media(min-width:568px) {
-    .end {
-        margin-left: auto
+    @media (min-width: 568px) {
+        .end {
+            margin-left: auto;
+        }
     }
-}
 
-@media(max-width:768px) {
+    @media (max-width: 768px) {
+        #post {
+            width: 100%;
+        }
+    }
+
+    #clicked {
+        padding-top: 1px;
+        padding-bottom: 1px;
+        text-align: center;
+        width: 100%;
+        background-color: #ecb21f;
+        border-color: #a88734 #9c7e31 #846a29;
+        color: black;
+        border-width: 1px;
+        border-style: solid;
+        border-radius: 13px;
+    }
+
+    #profile {
+        background-color: unset;
+    }
+
     #post {
-        width: 100%
+        margin: 10px;
+        padding: 6px;
+        padding-top: 2px;
+        padding-bottom: 2px;
+        text-align: center;
+        background-color: #ecb21f;
+        border-color: #a88734 #9c7e31 #846a29;
+        color: black;
+        border-width: 1px;
+        border-style: solid;
+        border-radius: 13px;
+        width: 50%;
     }
-}
 
-#clicked {
-    padding-top: 1px;
-    padding-bottom: 1px;
-    text-align: center;
-    width: 100%;
-    background-color: #ecb21f;
-    border-color: #a88734 #9c7e31 #846a29;
-    color: black;
-    border-width: 1px;
-    border-style: solid;
-    border-radius: 13px
-}
+    #nav-items li a,
+    #profile {
+        text-decoration: none;
+        color: rgb(224, 219, 219);
+        background-color: black;
+    }
 
-#profile {
-    background-color: unset
-}
+    .comments {
+        margin-top: 5%;
+        margin-left: 20px;
+    }
 
-#post {
-    margin: 10px;
-    padding: 6px;
-    padding-top: 2px;
-    padding-bottom: 2px;
-    text-align: center;
-    background-color: #ecb21f;
-    border-color: #a88734 #9c7e31 #846a29;
-    color: black;
-    border-width: 1px;
-    border-style: solid;
-    border-radius: 13px;
-    width: 50%
-}
+    .darker {
+        border: 1px solid #ecb21f;
+        background-color: black;
+        float: right;
+        border-radius: 5px;
+        padding-left: 40px;
+        padding-right: 30px;
+        padding-top: 10px;
+    }
 
-#nav-items li a,
-#profile {
-    text-decoration: none;
-    color: rgb(224, 219, 219);
-    background-color: black
-}
+    .comment {
+        border: 1px solid rgba(16, 46, 46, 1);
+        background-color: rgba(16, 46, 46, 0.973);
+        float: left;
+        border-radius: 5px;
+        padding-left: 40px;
+        padding-right: 30px;
+        padding-top: 10px;
+    }
 
-.comments {
-    margin-top: 5%;
-    margin-left: 20px
-}
+    .comment h4,
+    .comment span,
+    .darker h4,
+    .darker span {
+        display: inline;
+    }
 
-.darker {
-    border: 1px solid #ecb21f;
-    background-color: black;
-    float: right;
-    border-radius: 5px;
-    padding-left: 40px;
-    padding-right: 30px;
-    padding-top: 10px
-}
+    .comment p,
+    .comment span,
+    .darker p,
+    .darker span {
+        color: rgb(184, 183, 183);
+    }
 
-.comment {
-    border: 1px solid rgba(16, 46, 46, 1);
-    background-color: rgba(16, 46, 46, 0.973);
-    float: left;
-    border-radius: 5px;
-    padding-left: 40px;
-    padding-right: 30px;
-    padding-top: 10px
-}
+    #head1,
+    #head2,
+    #head3 {
+        color: white;
+        font-weight: bold;
+    }
 
-.comment h4,
-.comment span,
-.darker h4,
-.darker span {
-    display: inline
-}
+    label {
+        color: rgb(212, 208, 208);
+    }
 
-.comment p,
-.comment span,
-.darker p,
-.darker span {
-    color: rgb(184, 183, 183)
-}
+    #align-form {
+        margin-top: 20px;
+    }
 
-#head1,
-#head2,
-#head3{
-    color: white;
-    font-weight: bold
-}
+    .form-group p a {
+        color: white;
+    }
 
-label {
-    color: rgb(212, 208, 208)
-}
+    #checkbx {
+        background-color: black;
+    }
 
-#align-form {
-    margin-top: 20px
-}
+    #darker img {
+        margin-right: 15px;
+        position: static;
+    }
 
-.form-group p a {
-    color: white
-}
+    .form-group input,
+    .form-group textarea {
+        background-color: black;
+        border: 1px solid rgba(16, 46, 46, 1);
+        border-radius: 12px;
+    }
 
-#checkbx {
-    background-color: black
-}
-
-#darker img {
-    margin-right: 15px;
-    position: static
-}
-
-.form-group input,
-.form-group textarea {
-    background-color: black;
-    border: 1px solid rgba(16, 46, 46, 1);
-    border-radius: 12px
-}
-
-form {
-    border: 1px solid rgba(16, 46, 46, 1);
-    background-color: rgba(16, 46, 46, 0.973);
-    border-radius: 5px;
-    padding: 20px
-}
-#blogbox {
-    -webkit-box-shadow: 0 0 10px rgb(105, 130, 255);
-    -moz-box-shadow: 0 0 10px rgb(0,0,0);
-}
+    form {
+        border: 1px solid rgba(16, 46, 46, 1);
+        background-color: rgba(16, 46, 46, 0.973);
+        border-radius: 5px;
+        padding: 20px;
+    }
+    #blogbox {
+        -webkit-box-shadow: 0 0 10px rgb(105, 130, 255);
+        -moz-box-shadow: 0 0 10px rgb(0, 0, 0);
+    }
 </style>
+
+<!-- Allows re-loading of page without the prompt to re-submit data(comment) -->
 <script>
-    if ( window.history.replaceState ) {
-      window.history.replaceState( null, null, window.location.href );
+    if (window.history.replaceState) {
+        window.history.replaceState(null, null, window.location.href);
     }
 </script>
-<link rel="stylesheet" href="/static/css/atom-one-dark.min.css">
+
+<link rel="stylesheet" href="/static/css/atom-one-dark.min.css" />
 <script src="/static/JavaScript/highlight.min.js"></script>
-<script>hljs.highlightAll();</script>
+
+<!-- Highlights Code in the blog -->
+<script>
+    hljs.highlightAll();
+</script>
+
 {% endblock content %}

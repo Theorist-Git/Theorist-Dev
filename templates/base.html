@@ -1,218 +1,183 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- basic -->
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <!-- mobile metas -->
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
-    <!-- site metas -->
-    <title>ArcisCoding</title>
-    <!-- bootstrap css -->
-    <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
-    <!-- favicon -->
-    <link rel="shortcut icon" type="image/ico" href="/static/favicon.ico" />
-  </head>
-  <body style="background-color:#171e40;">
-    <!-- header -->
-    <header id="base-head">
-      <!-- header inner -->
-      <div class="header">
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-          <div class="container-fluid">
-            <a class="navbar-brand" href="/">
-              <img
-                src="/static/images/MainIcon.png"
-                alt=""
-                width="30"
-                height="30"
-                class="d-inline-block align-text-top"
-              />
-              ArcisCoding
-            </a>
-            <button
-              class="navbar-toggler"
-              type="button"
-              data-bs-toggle="collapse"
-              data-bs-target="#navbarSupportedContent"
-              aria-controls="navbarSupportedContent"
-              aria-expanded="false"
-              aria-label="Toggle navigation"
-            >
-              <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-              <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                <li class="nav-item mx-2">
-                  <a class="nav-link active" aria-current="page" href="/"
-                    >Home</a
-                  >
-                </li>
-                {% if not current_user.is_authenticated %}
-                <li class="nav-item mx-2">
-                  <a class="nav-link active" href="/login">Login</a>
-                </li>
-                {% endif %}
-                <li class="nav-item mx-2">
-                  <a class="nav-link active" href="/about">About</a>
-                </li>
-                <li class="nav-item mx-2">
-                  <a class="nav-link active" href="/projects">Projects</a>
-                </li>
-                <li class="nav-item mx-2">
-                  <a class="nav-link active" href="/feedback">Contact</a>
-                </li>
-                <li class="nav-item mx-2">
-                  <a class="nav-link active" href="/blogindex">Blog</a>
-                </li>
-                {% if not current_user.is_authenticated %}
-                <li class="nav-item mx-2">
-                  <a class="nav-link active" href="/create">Sign Up</a>
-                </li>
-                {% endif %} {% if current_user.is_authenticated %}
-                <li class="nav-item dropdown mx-2">
-                  <a
-                    class="nav-link dropdown-toggle"
-                    href="/secrets"
-                    id="navbarDropdown"
-                    role="button"
-                    data-bs-toggle="dropdown"
-                    aria-expanded="false"
-                    style="color: white"
-                  >
-                    <b>Your Account</b>
-                  </a>
-                  <ul
-                    class="dropdown-menu dropdown-menu-end"
-                    aria-labelledby="navbarDropdown"
-                  >
-                    <li>
-                      <a class="dropdown-item" href="/secrets">My Account</a>
-                    </li>
-                    <li>
-                      <a class="dropdown-item" href="/blogindex">My Blogs</a>
-                    </li>
-                    <li><a class="dropdown-item" href="/logout">Logout</a></li>
-                    <li><hr class="dropdown-divider" /></li>
-                    {% if current_user.role != "admin" %}
-                    <li>
-                      <a class="dropdown-item" style="color: red" href="/delete"
-                        >Delete your account :c</a
-                      >
-                    </li>
-                    {% endif %}
-                  </ul>
-                </li>
-                {% endif %}
-              </ul>
+    <head>
+        <!-- Required meta tags -->
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <!-- basic -->
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <!-- mobile metas -->
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+        <!-- site metas -->
+        <title>ArcisCoding</title>
+        <!-- bootstrap css -->
+        <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
+        <!-- favicon -->
+        <link rel="shortcut icon" type="image/ico" href="/static/favicon.ico" />
+    </head>
+    <body style="background-color: #171e40;">
+        <!-- header -->
+        <header id="base-head">
+            <!-- header inner -->
+            <div class="header">
+                <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+                    <div class="container-fluid">
+                        <a class="navbar-brand" href="/">
+                            <img src="/static/images/MainIcon.png" alt="" width="30" height="30" class="d-inline-block align-text-top" />
+                            ArcisCoding
+                        </a>
+                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+                        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                                <li class="nav-item mx-2">
+                                    <a class="nav-link active" aria-current="page" href="/">Home</a>
+                                </li>
+                                {% if not current_user.is_authenticated %}
+                                <li class="nav-item mx-2">
+                                    <a class="nav-link active" href="/login">Login</a>
+                                </li>
+                                {% endif %}
+                                <li class="nav-item mx-2">
+                                    <a class="nav-link active" href="/about">About</a>
+                                </li>
+                                <li class="nav-item mx-2">
+                                    <a class="nav-link active" href="/projects">Projects</a>
+                                </li>
+                                <li class="nav-item mx-2">
+                                    <a class="nav-link active" href="/feedback">Contact</a>
+                                </li>
+                                <li class="nav-item mx-2">
+                                    <a class="nav-link active" href="/blogindex">Blog</a>
+                                </li>
+                                {% if not current_user.is_authenticated %}
+                                <li class="nav-item mx-2">
+                                    <a class="nav-link active" href="/create">Sign Up</a>
+                                </li>
+                                {% endif %}
+                                {% if current_user.is_authenticated %}
+                                <li class="nav-item dropdown mx-2">
+                                    <a class="nav-link dropdown-toggle" href="/secrets" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="color: white;">
+                                        <b>Your Account</b>
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                                        <li>
+                                            <a class="dropdown-item" href="/secrets">My Account</a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="/blogindex">My Blogs</a>
+                                        </li>
+                                        <li><a class="dropdown-item" href="/logout">Logout</a></li>
+                                        <li><hr class="dropdown-divider" /></li>
+                                        {% if current_user.role != "admin" %}
+                                        <li>
+                                            <a class="dropdown-item" style="color: red;" href="/delete">Delete your account :c</a>
+                                        </li>
+                                        {% endif %}
+                                    </ul>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                </nav>
             </div>
-          </div>
-        </nav>
-      </div>
-    </header>
-    {% block content %} {% endblock content %}
-    <footer class="bd-footer py-0 mt-5 bg-dark">
-      <div class="container py-5">
-        <div class="row">
-          <div class="col-lg-3 mb-3">
-            <a style="color: white" class="navbar-brand mb-0 h1" href="/">
-              <img
-                src="/static/images/MainIcon.png"
-                width="20"
-                height="20"
-                class="d-inline-block align-top"
-                alt=""
-              />
-              Arcis Coding
-            </a>
-            <ul class="list-unstyled small text-muted">
-              <li class="mb-2" style="color: white">
-                Designed and built
-                <a href="https://github.com/Theorist-Git" target="_blank" rel="noopener noreferrer">Mayank Vats</a>.
-              </li>
-              <li class="mb-2">Currently v4.0.0</li>
-              <li class="mb-2" style="color: white">
-                Copyright (C) Mayank Vats - All Rights Reserved (2021-2022)
-              </li>
-            </ul>
-          </div>
-          <div class="col-6 col-lg-2 offset-lg-1 mb-3">
-            <h5 style="color: white">Links</h5>
-            <ul class="list-unstyled">
-              <li class="mb-2"><a href="/">Home</a></li>
-              <li class="mb-2"><a href="/blogindex">Blog</a></li>
-            </ul>
-          </div>
-          <div class="col-6 col-lg-2 mb-3">
-            <h5 style="color: white">Guides</h5>
-            <ul class="list-unstyled">
-              <li class="mb-2">
-                <a href="https://www.youtube.com/watch?v=oA8brF3w5XQ"
-                  >Getting started</a
-                >
-              </li>
-              <li class="mb-2">
-                <a href="https://flask.palletsprojects.com/en/1.1.x/quickstart/"
-                  >Starter template</a
-                >
-              </li>
-            </ul>
-          </div>
-          <div class="col-6 col-lg-2 mb-3">
-            <h5 style="color: white">Projects</h5>
-            <ul class="list-unstyled">
-              <li class="mb-2">
-                <a
-                  href="https://github.com/Theorist-Git/AuthAlpha"
-                  target="_blank" rel="noopener noreferrer"
-                  >AuthAlpha</a
-                >
-              </li>
-              <li class="mb-2">
-                <a
-                  href="https://github.com/Theorist-Git/Regression"
-                  target="_blank" rel="noopener noreferrer"
-                  >Regression</a
-                >
-              </li>
-            </ul>
-          </div>
-          <div class="col-6 col-lg-2 mb-3">
-            <h5 style="color: white">Community</h5>
-            <ul class="list-unstyled">
-              <li class="mb-2">
-                <a href="https://forms.gle/FBG28Sw3HDgLtksF8">Bug Reports</a>
-              </li>
-              <li class="mb-2"><a href="/feedback">Feedback</a></li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </footer>
-    <script
-      type="text/javascript"
-      src="/static/JavaScript/bootstrap.min.js"
-    ></script>
-    <script
-      type="text/javascript"
-      src="/static/JavaScript/popper.min.js"
-    ></script>
-  </body>
-  <style>
-    .nav-item.dropdown {
-      background: blue !important;
-    }
-    button:hover,
-    a:hover {
-      opacity: 0.85;
-    }
-    html *
-    {
-       font-family: "Consolas";
-    }
-  </style>
+        </header>
+
+        <!-- Spacer elements ensure that content remains at the center of the webpage -->
+        <div class="spacer"></div>
+
+        {% block content %}
+        <!-- All other views inject their HTML here -->
+      	{% endblock content %}
+
+        <div class="spacer"></div>
+
+        <footer class="bd-footer py-0 mt-5 bg-dark">
+            <div class="container py-5">
+                <div class="row">
+                    <div class="col-lg-3 mb-3">
+                        <a style="color: white;" class="navbar-brand mb-0 h1" href="/">
+                            <img src="/static/images/MainIcon.png" width="20" height="20" class="d-inline-block align-top" alt="" />
+                            Arcis Coding
+                        </a>
+                        <ul class="list-unstyled small text-muted">
+                            <li class="mb-2" style="color: white;">
+                                Designed and built
+                                <a href="https://github.com/Theorist-Git" target="_blank" rel="noopener noreferrer">Mayank Vats</a>.
+                            </li>
+                            <li class="mb-2">Currently v4.0.0</li>
+                            <li class="mb-2" style="color: white;">
+                                Copyright (C) Mayank Vats - All Rights Reserved (2021-2022)
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-6 col-lg-2 offset-lg-1 mb-3">
+                        <h5 style="color: white;">Links</h5>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><a href="/">Home</a></li>
+                            <li class="mb-2"><a href="/blogindex">Blog</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-6 col-lg-2 mb-3">
+                        <h5 style="color: white;">Guides</h5>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <a href="https://www.youtube.com/watch?v=oA8brF3w5XQ">Getting started</a>
+                            </li>
+                            <li class="mb-2">
+                                <a href="https://flask.palletsprojects.com/en/1.1.x/quickstart/">Starter template</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-6 col-lg-2 mb-3">
+                        <h5 style="color: white;">Projects</h5>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <a href="https://github.com/Theorist-Git/AuthAlpha" target="_blank" rel="noopener noreferrer">AuthAlpha</a>
+                            </li>
+                            <li class="mb-2">
+                                <a href="https://github.com/Theorist-Git/Regression" target="_blank" rel="noopener noreferrer">Regression</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-6 col-lg-2 mb-3">
+                        <h5 style="color: white;">Community</h5>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <a href="https://forms.gle/FBG28Sw3HDgLtksF8">Bug Reports</a>
+                            </li>
+                            <li class="mb-2"><a href="/feedback">Feedback</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </footer>
+        <script type="text/javascript" src="/static/JavaScript/bootstrap.min.js"></script>
+        <script type="text/javascript" src="/static/JavaScript/popper.min.js"></script>
+    </body>
+    <style>
+        .nav-item.dropdown {
+            background: blue !important;
+        }
+        button:hover,
+        a:hover {
+            opacity: 0.85;
+        }
+        html * {
+            font-family: "Consolas";
+        }
+           body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .spacer {
+            flex: 1;
+        }
+    </style>
 </html>

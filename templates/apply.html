@@ -1,63 +1,63 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<div class = "container my-5">
-<div class="jumbotron">
-  <h1 class="display-4">Author Application Form</h1>
-  <p class="lead">Please Fill out the following application form</p>
-  <hr class="my-4">
-  <p>This form will reviewed and if found adequate, you will be provided with author privileges, which are writing,
-  editing, reviewing and deleting blogs.</p>
-  <a class="btn btn-primary btn-lg" href="https://getbootstrap.com/docs/4.1/components/jumbotron/" role="button">Learn more</a>
+<div class="container my-5">
+    <div class="jumbotron">
+        <h1 class="display-4">Author Application Form</h1>
+        <p class="lead">Please Fill out the following application form</p>
+        <hr class="my-4" />
+        <p>This form will reviewed and if found adequate, you will be provided with author privileges, which are writing, editing, reviewing and deleting blogs.</p>
+        <a class="btn btn-primary btn-lg" href="https://getbootstrap.com/docs/4.1/components/jumbotron/" role="button">Learn more</a>
+    </div>
 </div>
-</div>
-<div class = "container my-3">
-      <h2>Application</h2>
-      <form action = "/apply" method = "POST">
+<div class="container my-3">
+    <h2>Application</h2>
+    <form action="/apply" method="POST">
         <div class="form-group mb-3">
             <label>Email</label>
-            <input class="form-control" type="text" placeholder="{{ current_user.email }}" readonly>
+            <input class="form-control" type="text" placeholder="{{ current_user.email }}" readonly />
         </div>
         <div class="form-group mb-3">
-          <label for="CName" class="form-label">Full Name (Not a pseudonym)</label>
-          <input type="text" class="form-control" name = "name" id="CName" placeholder="Name : John Doe">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <label for="CName" class="form-label">Full Name (Not a pseudonym)</label>
+            <input type="text" class="form-control" name="name" id="CName" placeholder="Name : John Doe" />
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         </div>
         <div class="form-group mb-3">
-          <label for="tech" class="form-label">What all technologies do you know?</label>
-          <input type="text" class="form-control" name = "tech" id="tech" aria-describedby="emailHelp" placeholder="Eg: Flask, Tensorflow etc">
+            <label for="tech" class="form-label">What all technologies do you know?</label>
+            <input type="text" class="form-control" name="tech" id="tech" aria-describedby="emailHelp" placeholder="Eg: Flask, Tensorflow etc" />
         </div>
         <div class="form-group">
-          <label for="role">Your Role</label>
-          <select class="form-control" id="role" name="role">
-            <option>I am a student</option>
-            <option>I am a full time developer</option>
-            <option>I am a part-time developer</option>
-            <option>I am a teacher</option>
-            <option>I am a freelancer</option>
-          </select>
+            <label for="role">Your Role</label>
+            <select class="form-control" id="role" name="role">
+                <option>I am a student</option>
+                <option>I am a full time developer</option>
+                <option>I am a part-time developer</option>
+                <option>I am a teacher</option>
+                <option>I am a freelancer</option>
+            </select>
         </div>
         <div class="form-group mb-3">
-          <label for="deg" class="form-label">Your educational Qualification</label>
-          <input type="text" class="form-control" name = "deg" id="deg" aria-describedby="emailHelp" placeholder="Eg: Btech/ MS/ PhD etc">
+            <label for="deg" class="form-label">Your educational Qualification</label>
+            <input type="text" class="form-control" name="deg" id="deg" aria-describedby="emailHelp" placeholder="Eg: Btech/ MS/ PhD etc" />
         </div>
         <div class="text-center">
             <h4>Write a short application, mention any previous experiences.</h4>
         </div>
         <div class="form-group">
-            <textarea name="feed" id="feed" class="form-control" placeholder="Your Message" rows="3"></textarea> <!-- Modal Footer-->
+            <textarea name="feed" id="feed" class="form-control" placeholder="Your Message" rows="3"></textarea>
+            <!-- Modal Footer-->
         </div>
 
-        <div class="alert alert-primary my-3" role="alert" >
-          Greeting, Traveller!
+        <div class="alert alert-primary my-3" role="alert">
+            Greeting, Traveller!
         </div>
-        <button type="submit" id = "s_ubmit" class="btn btn-primary">Submit</button>
-
-        </form>
-  <div class="container my-3">
+        <button type="submit" id="s_ubmit" class="btn btn-primary">Submit</button>
+    </form>
+    <!--JINJA to display flashed messages-->
+    <div class="container my-3">
         {% with messages = get_flashed_messages(with_categories=true) %}
-         {% if messages %}
-               {% for category, message in messages %}
+            {% if messages %}
+                {% for category, message in messages %}
                     {% if category == 'error' %}
                         <div class="alert alert-danger" role="alert">
                         {{ message }}
@@ -67,15 +67,17 @@
                         {{ message }}
                         </div>
                     {% endif %}
-               {% endfor %}
-         {% endif %}
+                {% endfor %}
+            {% endif %}
         {% endwith %}
-        </div>
+    </div>
 </div>
+
+<!--Enabling Dark Mode-->
 <style>
-    .container
-    {
-       color: #fff;
+    .container {
+        color: #fff !important;
     }
 </style>
+
 {% endblock content %}

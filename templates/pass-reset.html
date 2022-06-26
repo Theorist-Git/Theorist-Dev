@@ -1,16 +1,16 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<div class = "container my-3">
-      <h2>Reset Password</h2>
-      <form action = "/pass-reset" method = "POST">
+<div class="container my-3">
+    <h2>Reset Password</h2>
+    <form action="/pass-reset" method="POST">
         <div class="form-group mb-3">
-          <label for="PASSWORD">Password</label>
-          <input autofocus="autofocus" type="PASSWORD" pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*_=+-]).{8,128}$" class="form-control" name = "PASSWORD" id="PASSWORD" placeholder="Password">
+            <label for="PASSWORD">Password</label>
+            <input autofocus="autofocus" type="PASSWORD" pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*_=+-]).{8,128}$" class="form-control" name="PASSWORD" id="PASSWORD" placeholder="Password" />
         </div>
         <div class="form-group mb-3">
-          <label for="C-PASSWORD">Confirm Password</label>
-          <input type="password" pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*_=+-]).{8,128}$" class="form-control" name = "C-PASSWORD" id="C-PASSWORD" placeholder="Confirm Password">
+            <label for="C-PASSWORD">Confirm Password</label>
+            <input type="password" pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*_=+-]).{8,128}$" class="form-control" name="C-PASSWORD" id="C-PASSWORD" placeholder="Confirm Password" />
         </div>
         <div class="form-group mb-3">
             Your Password must have:
@@ -21,40 +21,45 @@
                 <li>Min. 8 chars and Max. 128 characters</li>
             </ul>
         </div>
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-        <div class="alert alert-primary my-3" role="alert" >
-          Greetings, Traveller!
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <div class="alert alert-primary my-3" role="alert">
+            Greetings, Traveller!
         </div>
-        <button type="submit" id = "s_ubmit" class="btn btn-primary">Submit</button>
-        </form>
-  <div class="container my-3">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-         {% if messages %}
-               {% for category, message in messages %}
-                    {% if category == 'error' %}
-                        <div class="alert alert-danger" role="alert">
-                        {{ message }}
-                        </div>
-                    {% else %}
-                        <div class="alert alert-success" role="alert">
-                        {{ message }}
-                        </div>
-                    {% endif %}
-               {% endfor %}
-         {% endif %}
-        {% endwith %}
-        </div>
+        <button type="submit" id="s_ubmit" class="btn btn-primary">Submit</button>
+    </form>
+
+    <!-- JINJA to display flashed messages -->
+	<div class="container my-3">
+		{% with messages = get_flashed_messages(with_categories=true) %}
+			{% if messages %}
+				{% for category, message in messages %}
+					{% if category == 'error' %}
+						<div class="alert alert-danger" role="alert">
+						{{ message }}
+						</div>
+					{% else %}
+						<div class="alert alert-success" role="alert">
+						{{ message }}
+						</div>
+					{% endif %}
+				{% endfor %}
+			{% endif %}
+		{% endwith %}
+	</div>
 </div>
-<script type="text/javascript">
-        window.history.forward();
-        function noBack() {
-            window.history.forward();
-        }
+
+<!-- Allows re-loading of page without the prompt to re-submit data(Search-Query) -->
+<script>
+    if (window.history.replaceState) {
+        window.history.replaceState(null, null, window.location.href);
+    }
 </script>
+
+<!-- Enabling Dark Mode -->
 <style>
-    .container
-    {
-       color: #fff !important;
+    .container {
+        color: #fff !important;
     }
 </style>
+
 {% endblock content %}
