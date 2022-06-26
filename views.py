@@ -38,7 +38,7 @@ def addblog():
     authorized = ["admin", "author"]
     if current_user.role in authorized:
         if request.method == 'POST':
-            session['post'] = request.form.get('editor')
+            session['post'] = request.form.get('WYSIWYG')
             session['title'] = request.form.get('title')
             session['time'] = request.form.get('time')
             session['desc'] = request.form.get('desc')

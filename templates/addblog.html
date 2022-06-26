@@ -10,9 +10,17 @@
           <input autofocus="autofocus" type="text" class="form-control" name = "title" id="CName" aria-describedby="emailHelp" placeholder="Enter title of your post">
         </div>
         <div class = "my-3">
-            <textarea id = "editor" name = "editor" class="tinymce"></textarea>
-            <script type="text/javascript" src="static/plugin/tinymce/js/tinymce/tinymce.min.js"></script>
-            <script type="text/javascript" src="static/plugin/tinymce/js/tinymce/init-tinymce.js"></script>
+            <textarea id = "WYSIWYG" name = "WYSIWYG" class="WYSIWYG"></textarea>
+            <script referrerpolicy="origin" type="text/javascript" src="static/plugin/tinymce/js/tinymce/tinymce.min.js"></script>
+                <script>
+                  tinymce.init({
+                    selector: '#WYSIWYG',
+                    plugins: 'lists advlist, codesample, anchor, link autolink, autosave, code, fullscreen, help, image, media, pagebreak, preview, searchreplace, table, template, wordcount',
+                    link_default_target: '_blank',
+                    toolbar: 'undo redo | styles | bold italic | alignleft aligncenter alignright alignjustify | outdent indent | bullist',
+                    skin: 'oxide-dark',
+                  });
+                </script>
         </div>
         <div class="form-group mb-3">
           <label for="time" class="form-label">How many minutes to read</label>
