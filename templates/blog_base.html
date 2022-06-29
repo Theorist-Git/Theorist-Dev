@@ -35,23 +35,26 @@
                         <button type="submit" id="s_ubmit" class="btn btn-primary btn-lg btn-block">Submit</button>
                     </form>
                 </div>
-                {% if comments |length != 0 %}
-                <div class="my-4">
-                    <h1 id="head2">Comments</h1>
-                    {% for i in comments %}
-                    <div class="comment col-12 my-3">
-                        <h4 id="head3">{{ i.name }}</h4>
-                        <span>- {{ i.date }}</span> <br />
-                        <p>{{ i.data }}</p>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% endif %}
+
             </div>
         </div>
     </section>
 </div>
 {% endif %}
+<div class="container">
+    {% if comments |length != 0 %}
+    <div class="my-4">
+        <h1 id="head2">Comments</h1>
+        {% for i in comments %}
+        <div class="comment col-12 my-3">
+            <h4 id="head3">{{ i.name }}</h4>
+            <span>- {{ i.date }}</span> <br />
+            <p>{{ i.data }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
 <style>
     @media (min-width: 568px) {
         .end {
