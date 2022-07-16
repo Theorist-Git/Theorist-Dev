@@ -11,8 +11,8 @@ from werkzeug.exceptions import abort
 from website import db
 from datetime import datetime
 from website.models import User, Post, Comment
-from website.tert import TwoFactorAuth, ElectronicMail
-from AuthAlpha import PassHashing
+from website.tert import ElectronicMail
+from AuthAlpha import PassHashing, TwoFactorAuth
 
 # creating an instance of blueprint class for auth.py, later to be registered in the app (see __init__.py).
 auth = Blueprint('auth', __name__)
@@ -407,7 +407,7 @@ def two_fa():
     if referrer:
         if referrer[21:] in auth_href:
             if request.method == 'GET':
-                secret = crypt.totp(name=current_user.email)
+                secret = crypt.totp(name=current_user.email, issuer_name="arciscoding.io")
             if request.method == 'POST':
                 token = request.form['SECRET']
                 USER_OTP = request.form['OTP']

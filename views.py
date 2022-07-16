@@ -12,7 +12,8 @@ from werkzeug.exceptions import abort
 from .models import Post, Comment
 from . import db
 import os
-from website.tert import TwoFactorAuth, ElectronicMail, Misc
+from website.tert import ElectronicMail, Misc
+from AuthAlpha import TwoFactorAuth
 
 views = Blueprint('views', __name__)
 crypt = TwoFactorAuth()
