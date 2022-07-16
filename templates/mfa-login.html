@@ -20,7 +20,8 @@
             <label for="OTP-EMAIL" class="form-label">OTP</label>
             <input autofocus="autofocus" type="password" class="form-control" name="OTP-EMAIL" id="OTP-EMAIL" aria-describedby="emailHelp" placeholder="Enter otp sent to your email, valid for 5 minutes" />
         </div>
-        {% endif %} {% if two_fa[0] and two_fa[1] == "TOTP"%}
+        {% endif %}
+        {% if two_fa[0] and two_fa[1] == "TOTP"%}
         <h3>Enter OTP from your Authenticator app</h3>
         <div class="mb-3">
             <label for="OTP-TOTP" class="form-label">OTP</label>
