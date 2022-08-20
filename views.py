@@ -74,8 +74,7 @@ def addblog():
                     if not isFile:
                         os.mkdir(path)
                 f_name = f"templates//blogindex//{directory}//{session['blog_name']}.html"
-                import io
-                f = io.open(f_name, "w", encoding="utf-8")
+                f = open(f_name, "w", encoding="utf-8", newline='')
                 f.write("""
 <!--This is an auto-generated file-->
 {% extends 'blog_base.html' %}
@@ -169,7 +168,7 @@ def modelindex():
 @views.route('/generator', methods=['GET', 'POST'])
 def gen():
     if request.method == 'POST':
-        session['post'] = request.form.get('editor')
+        session['post'] = request.form.get('WYSIWYG')
         print(session['post'])
     return render_template("CodeGen.html", user=current_user)
 

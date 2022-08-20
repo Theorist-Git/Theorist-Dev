@@ -69,7 +69,7 @@ def new_comment(new_user):
         Initializes a new Comment class (see models.py) with test data to be later tested.
 
         :return: comment, type(comment) -> Comment
-        """
+     """
     comment = Comment(user_id=new_user.id,
                       name=new_user.name,
                       email=new_user.email,

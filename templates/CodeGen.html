@@ -3,7 +3,7 @@
 
 {% if current_user.role == "admin"%}
     <div class="container my-3">
-        <form action="/addblog" method="POST">
+        <form action="/generator" method="POST">
             <div class="form-group mb-3">
                 <label for="CName" class="form-label">Title</label>
                 <input autofocus="autofocus" type="text" class="form-control" name="title" id="CName" aria-describedby="emailHelp" placeholder="Enter title of your post" />
