@@ -2,7 +2,7 @@
 Copyright (C) Mayank Vats - All Rights Reserved
 Unauthorized copying of any file, via any medium is strictly prohibited
 Proprietary and confidential
-Written by Mayank Vats <arciscoding.6h93t@simplelogin.co>, 2021-2022
+Written by Mayank Vats <dev-theorist.e5xna@simplelogin.com>, 2021-2022
 """
 
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session
@@ -143,7 +143,7 @@ def otp():
             if request.method == 'GET':
                 COMP_OTP = crypt.static_otp(otp_len=6)
                 postman.sendmail(session['EMAIL'],
-                                 "ArcisCoding Email Verification",
+                                 "Theorist-Tech Email Verification",
                                  COMP_OTP,
                                  use_case="registration")
                 session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
@@ -274,7 +274,7 @@ def mfa_login():
                 if session['2FA_STATUS'][0] and session['2FA_STATUS'][1] == "EMAIL":
                     COMP_OTP = crypt.static_otp(otp_len=6)
                     postman.sendmail(session['EMAIL'],
-                                     "ArcisCoding Log-in Authorization",
+                                     "Theorist-Tech Log-in Authorization",
                                      COMP_OTP)
                     session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
             if request.method == 'POST':
@@ -407,7 +407,7 @@ def two_fa():
     if referrer:
         if referrer[21:] in auth_href:
             if request.method == 'GET':
-                secret = crypt.totp(name=current_user.email, issuer_name="arciscoding.io")
+                secret = crypt.totp(name=current_user.email, issuer_name="theorist-tech.com")
             if request.method == 'POST':
                 token = request.form['SECRET']
                 USER_OTP = request.form['OTP']
@@ -494,7 +494,7 @@ def otp_check():
             if request.method == 'GET':
                 COMP_OTP = crypt.static_otp(otp_len=6)
                 postman.sendmail(session['EMAIL'],
-                                 "ArcisCoding Password Reset",
+                                 "Theorist-Tech Password Reset",
                                  COMP_OTP,
                                  use_case="PassReset")
                 session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
