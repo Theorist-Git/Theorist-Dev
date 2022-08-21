@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container my-3"><h2><u>Your Blogs</u></h2></div>
+<div class="container">
+<section class="blog-list py-5 p-md-5">
+		{% if data|length != 0 %}
+			{% for i in data %}
+				<div class="container">
+					<button type="button" class="btn btn-primary position-relative">
+					  Reads
+					{% if i.clicks < 99 %}
+					  <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+						{{ i.clicks }}
+					  </span>
+					{% else %}
+						<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+						99+
+					  	</span>
+					{% endif %}
+					</button>
+					<div class="item mb-5">
+						<div class="media">
+							<div class="media-body">
+								<h3 class="title mb-1"><a href= "{{ i.href }}">{{ i.data }}</a></h3>
+								<div class="meta mb-1">
+									<span style="color:grey" class="date">{{ i.date }}</span><b>&nbsp;•&nbsp;</b><span style="color:grey" class="time">{{ i.time }} minute read</span><b>&nbsp;•&nbsp;</b><span style="color:grey" class="text">Author: {{ i.author }}</span>
+								</div>
+								<div class="intro">{{ i.desc }}</div>
+								<a class="more-link" href="{{ i.href }}">Read more &rarr;</a>
+							</div><!--//media-body-->
+						</div><!--//media-->
+					</div><!--//item-->
+					<hr style="height:4px">
+				</div>
+			{% endfor %}
+		{% else %}
+			<div class = "container my-3">
+				<div class="jumbotron">
+					<h1 class="display-4">Aw, snap</h1>
+					<p style="color: white; " class="lead">Looks like there are no blog posts.</p>
+					<hr class="my-4">
+					<p style="color: white; ">Click the button to add a post</p>
+					<a class="btn btn-primary btn-lg" href="/addblog" role="button">Add Post</a>
+				</div>
+			</div>
+		{% endif %}
+	</section>
+
+	<!-- JINJA to display flashed messages -->
+	<div class="my-3">
+		{% with messages = get_flashed_messages(with_categories=true) %}
+			{% if messages %}
+				{% for category, message in messages %}
+					{% if category == 'error' %}
+						<div class="alert alert-danger" role="alert">
+						{{ message }}
+						</div>
+					{% else %}
+						<div class="alert alert-success" role="alert">
+						{{ message }}
+						</div>
+					{% endif %}
+				{% endfor %}
+			{% endif %}
+		{% endwith %}
+	</div>
+
+	<footer class="footer text-center py-2 theme-bg-dark">
+	</footer>
+</div>
+
+<!-- Enabling Dark Mode -->
+<style>
+    .container {
+        color: #fff !important;
+    }
+</style>
+{% endblock content %}

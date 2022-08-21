@@ -5,8 +5,8 @@ Proprietary and confidential
 Written by Mayank Vats <dev-theorist.e5xna@simplelogin.com>, 2021-2022
 """
 
-from flask import Flask, render_template, url_for, flash
-from flask_admin import Admin
+from flask import Flask, render_template, url_for, flash, request, session
+from flask_admin import Admin, BaseView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
@@ -29,22 +29,27 @@ def create_app():
     :return: app (An instance of Flask)
     """
     app = Flask(__name__)
-    admin = Admin(app)
+    admin = Admin(app, name="Theorist", template_mode="bootstrap4")
 
     CSRFProtect(app)
 
     # 256 bit security key
-    app.config['WTF_CSRF_SECRET_KEY'] = 'xxx'
-    app.config['SECRET_KEY'] = 'xxx'
-    AES = b'xxx'
+    app.config['WTF_CSRF_SECRET_KEY'] = '---'
+    app.config['SECRET_KEY'] = '---'
+    AES = b'---'
     app.config['SESSION_CRYPTO_KEY'] = AES
     app.config['SESSION_COOKIE_SECURE'] = True
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:xxx@localhost/xxx'
+    app.config['REMEMBER_COOKIE_SECURE'] = True
+    app.config['REMEMBER_COOKIE_HTTPONLY'] = True
+    app.config['REMEMBER_COOKIE_SAMESITE'] = "Lax"
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://user:password@localhost/db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    # The session will timeout after 720 minutes or 12 hours
+    # The session will time out after 720 minutes or 12 hours
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=720)
+    # set optional bootswatch theme
+    app.config['FLASK_ADMIN_SWATCH'] = 'darkly'
     app.session_interface = EncryptedSessionInterface()
 
     # This callback can be used to initialize an application for the
@@ -63,7 +68,7 @@ def create_app():
 
     app.register_blueprint(auth, url_prefix='/')
     app.register_blueprint(views, url_prefix='/')
-    app.register_blueprint(docs, url_prefix='/Projects')
+    app.register_blueprint(docs, url_prefix='/projects')
     app.register_blueprint(AuthAlpha, url_prefix='/Projects/Cryptography')
 
     # 'app.errorhandler' decorator overrides default error pages and replaces them with custom ones
@@ -90,13 +95,11 @@ def create_app():
     # with app.app_context():
     #     db.create_all()
 
-    # Adding admin views
-    class MyAdminViews(ModelView):
+    class AnalyticsView(BaseView):
         def is_accessible(self):
             """
-            We override is_accessible method in BaseView and make it so that only users that
-            are authenticated and have an "admin" role can access admin views. You can change
-            accessibility parameters as you wish.
+            is_accessible method is overridden method in BaseView and make it so that only users that
+            are authenticated and have an "admin" role can access admin views.
             :return: Boolean (True -> is_accessible) & (False -> is_not_accessible)
             """
             if current_user.is_authenticated:
@@ -104,20 +107,49 @@ def create_app():
                 res = admin_user.role == "admin"
                 return res
 
-        def _handle_view(self, name, **kwargs):
+        @expose('/', methods=['GET', 'POST'])
+        def index(self):
+            if request.method == 'POST':
+                EMAIL = request.form['EMAIL']
+                if EMAIL and User.query.filter_by(email=EMAIL).first() is not None:
+                    del_user = User.query.filter_by(email=EMAIL).first()
+                    if del_user.role != "admin":
+                        Post.query.filter_by(user_id=del_user.id).delete()
+                        Comment.query.filter_by(user_id=del_user.id).delete()
+                        User.query.filter_by(email=del_user.email).delete()
+                        db.session.commit()
+                        flash("Account deleted successfully")
+                    else:
+                        flash("Cannot delete admins")
+                else:
+                    flash("Email invalid or doesn't exist!")
+            return self.render('admin_delete_user.html')
+
+    # Adding admin views
+    class MyAdminViews(ModelView):
+        def is_accessible(self):
             """
-            Output is based on the aforementioned is_accessible() overridden method, and on the
-            off chance that the view is_not_accessible, the user is redirected to login page with
-            a flash of 403 error.
+            is_accessible method is overridden method in BaseView and make it so that only users that
+            are authenticated and have an "admin" role can access admin views.
+            :return: Boolean (True -> is_accessible) & (False -> is_not_accessible)
             """
-            if not self.is_accessible():
-                flash("Forbidden 403", category="error")
-                return redirect(url_for('auth.login'))
+            if current_user.is_authenticated:
+                admin_user = User.query.filter_by(role=current_user.role).first()
+                res = admin_user.role == "admin"
+                return res
+
+        def inaccessible_callback(self, name, **kwargs):
+            """
+            redirect to login page if user doesn't have access
+            """
+            flash("Forbidden 403", category="error")
+            return redirect(url_for('auth.login'))
 
     # Adding views to admin (An instance of Admin class in flask_admin)
     admin.add_view((MyAdminViews(User, db.session)))
     admin.add_view((MyAdminViews(Post, db.session)))
     admin.add_view((MyAdminViews(Comment, db.session)))
+    admin.add_view(AnalyticsView(name='Delete User', endpoint='delete_user'))
 
     # To use flask-login to manage authentication ,we create an instance of LoginManager Class in flask-login.
     # We also have to specify which view will handle authentication, in my case the view is auth.login.

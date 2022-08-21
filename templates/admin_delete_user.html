@@ -1,0 +1,20 @@
+{% extends 'admin/master.html' %}
+{% block body %}
+
+<div class="container my-3">
+    <h2>Login</h2>
+    <form action="/admin/delete_user" method="POST">
+        <div class="form-group mb-3">
+            <label for="EMAIL" class="form-label">Delete</label>
+            <input autofocus="autofocus" type="email" class="form-control" name="EMAIL" id="EMAIL" aria-describedby="emailHelp" placeholder="johndoe@gmail.com" />
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        </div>
+        <div class="alert alert-danger my-3" role="alert">
+            Proceed with caution
+        </div>
+        <button id="login-sub" type="submit" class="btn btn-primary">Delete</button>
+    </form>
+</div>
+
+
+{% endblock %}

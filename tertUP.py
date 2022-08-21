@@ -6,71 +6,6 @@ Written by Mayank Vats <dev-theorist.e5xna@simplelogin.com>, 2021-2022
 """
 
 
-class TwoFactorAuth:
-
-    @staticmethod
-    def static_otp(otp_len: int = 6) -> str:
-        """
-        Used to generate Random ONE-TIME-PASSWORDS which are
-        utilized in the app for user verification and authentication.
-        Gets SystemRandom class instance out of secrets module and
-        generates a random integer in range [a, b].
-        :param: otp_len=6: length of the otp
-        :return: str(random integer in range [10^n, (10^n) - 1])
-        """
-        # secure random integer numbers
-        from secrets import SystemRandom
-
-        secrets_generator = SystemRandom()
-        l_range = (10 ** (otp_len - 1))
-        h_range = (l_range * 10) - 1
-        otp = secrets_generator.randint(l_range, h_range)
-        return str(otp)
-
-    @staticmethod
-    def totp(name, issuer_name: str = "ArcisCoding.io", secret_len: int = 64) -> tuple:
-        from pyotp import random_base32, TOTP
-        token = random_base32(secret_len)
-        URL = TOTP(token).provisioning_uri(name=name, issuer_name=issuer_name)
-
-        return token, URL
-
-    @staticmethod
-    def verify(token: str, otp) -> bool:
-        from pyotp import TOTP
-        return TOTP(token).verify(str(otp))
-
-    @staticmethod
-    def encrypt(key: bytes, source: bytes, encode=True) -> str:
-        import base64
-        from Crypto.Cipher import AES
-        from Crypto.Hash import SHA256
-        from Crypto import Random
-        key = SHA256.new(key).digest()  # use SHA-256 over our key to get a proper-sized AES key
-        IV = Random.new().read(AES.block_size)  # generate IV
-        encryptor = AES.new(key, AES.MODE_CBC, IV)
-        padding = AES.block_size - len(source) % AES.block_size  # calculate needed padding
-        source += bytes([padding]) * padding  # Python 2.x: source += chr(padding) * padding
-        data = IV + encryptor.encrypt(source)  # store the IV at the beginning and encrypt
-        return base64.b64encode(data).decode("latin-1") if encode else data
-
-    @staticmethod
-    def decrypt(key: bytes, source, decode=True) -> str:
-        import base64
-        from Crypto.Cipher import AES
-        from Crypto.Hash import SHA256
-        if decode:
-            source = base64.b64decode(source.encode("latin-1"))
-        key = SHA256.new(key).digest()  # use SHA-256 over our key to get a proper-sized AES key
-        IV = source[:AES.block_size]  # extract the IV from the beginning
-        decryptor = AES.new(key, AES.MODE_CBC, IV)
-        data = decryptor.decrypt(source[AES.block_size:])  # decrypt
-        padding = data[-1]  # pick the padding value from the end; Python 2.x: ord(data[-1])
-        if data[-padding:] != bytes([padding]) * padding:  # Python 2.x: chr(padding) * padding
-            raise ValueError("Invalid padding...")
-        return data[:-padding].decode('utf-8')  # remove the padding
-
-
 class ElectronicMail:
 
     @staticmethod
@@ -79,26 +14,26 @@ class ElectronicMail:
         import smtplib
         content = {
             "mfalogin": [
-                "CitadelCoding Two-Factor-Authentication Code:",
+                "Theorist-Tech Two-Factor-Authentication Code:",
                 f"You OTP is: {note}",
                 "If you didn't attempt this login, someone has your account details, change them immediately:",
                 ["https://github.com/Theorist-Git/", "Change-Password"]
             ],
             "registration": [
-                "CitadelCoding Registration Code:",
+                "Theorist-Tech Registration Code:",
                 f"You OTP is: {note}",
                 """If you didn't attempt this registration, you can safely ignore this email, someone might have typed 
 it in by mistake""",
                 ["https://github.com/Theorist-Git/", "See Latest Projects and Blogs"]
             ],
             "Enable_2FA": [
-                "CitadelCoding Enabling 2FA",
+                "Theorist-Tech Enabling 2FA",
                 f"You OTP is: {note}",
                 "If you didn't attempt this, someone has your account details, change them immediately:",
                 ["https://github.com/Theorist-Git/", "Change-Password"]
             ],
             "PassReset": [
-                "CitadelCoding Password-Reset",
+                "Theorist-Tech Password-Reset",
                 f"You OTP is: {note}",
                 """If you didn't attempt this password-reset, you can safely ignore this email, someone might have typed 
 it in by mistake""",
@@ -109,8 +44,8 @@ it in by mistake""",
         msg = EmailMessage()
 
         # setup the parameters of the message
-        password = "xxx"
-        msg['From'] = "xxx"
+        password = "==="
+        msg['From'] = "==="
         msg['To'] = receiver
         msg['Subject'] = subject
 
@@ -288,15 +223,11 @@ it in by mistake""",
                   <td class="content-block" style="font-family: sans-serif; vertical-align: top; padding-bottom: 10px; 
                   padding-top: 10px; font-size: 12px; color: #999999; text-align: center;">
                     <span class="apple-link" style="color: #999999; font-size: 12px; text-align: center;">
-                    CitadelCoding</span>
+                    Theorist-Tech</span>
                     <br> This email was auto generated, please do not reply.
                   </td>
                 </tr>
                 <tr>
-                  <td class="content-block powered-by" style="font-family: sans-serif; vertical-align: top; 
-                  padding-bottom: 10px; padding-top: 10px; font-size: 12px; color: #999999; text-align: center;">
-                    Powered by <a href="http://htmlemail.io" style="color: #999999; font-size: 12px; text-align: 
-                    center; text-decoration: none;">HTMLemail</a>.
                   </td>
                 </tr>
               </table>

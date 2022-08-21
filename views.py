@@ -169,8 +169,14 @@ def modelindex():
 def gen():
     if request.method == 'POST':
         session['post'] = request.form.get('WYSIWYG')
-        print(session['post'])
     return render_template("CodeGen.html", user=current_user)
+
+
+@views.route('/myblogs', methods=['GET', 'POST'])
+@login_required
+def myblogs():
+    my_blogs = list(Post.query.filter_by(email=current_user.email))
+    return render_template("myblogs.html", data=my_blogs)
 
 
 # Generic view for blogs.

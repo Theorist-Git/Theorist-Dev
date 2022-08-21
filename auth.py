@@ -265,6 +265,7 @@ def mfa_login():
         "/login?next=%2Fsuccess",
         "/login?next=%2Fdisable2FA",
         "/login?next=%2Fdelete",
+        "/login?next=%2Fmyblogs",
         "/mfa-login"
     ]
     if referrer:
