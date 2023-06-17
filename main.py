@@ -9,9 +9,9 @@ import sys
 
 sys.path.append('C:\\Users\\mayan\\Desktop\\languages\\Python 3.9\\Projects\\WebDev\\Flask\\Citadel')
 
-from website import create_app
+from __init__ import create_app
 import logging
-from waitress import serve
+# from waitress import serve
 
 app = create_app()
 
@@ -39,13 +39,13 @@ if __name__ == '__main__':
         app.run(debug=True, use_reloader=True, port=5000, host='0.0.0.0')
 
 
-    def run_prod_server():
-        """
-        Production wsgi server, waitress is used to serve. Debug is False
-        by default.
-        """
-        app.debug = False
-        print('\033[1m', 'PRODUCTION SERVER', '\033[0m')
-        serve(app, listen='127.0.0.1:5000', threads=10)
+    # def run_prod_server():
+    #     """
+    #     Production wsgi server, waitress is used to serve. Debug is False
+    #     by default.
+    #     """
+    #     app.debug = False
+    #     print('\033[1m', 'PRODUCTION SERVER', '\033[0m')
+    #     serve(app, listen='127.0.0.1:5000', threads=10)
 
     run_dev_server()

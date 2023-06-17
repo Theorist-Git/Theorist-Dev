@@ -1,7 +1,8 @@
 *.pyc
 *.log
 .idea
-tert.py
-__init__.py
 blogindex
 *.coverage
+*.env
+tert.py
+session_encrytion.py

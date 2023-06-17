@@ -5,7 +5,7 @@ Proprietary and confidential
 Written by Mayank Vats <dev-theorist.e5xna@simplelogin.com>, 2021-2022
 """
 
-from . import db
+from __init__ import db
 from flask_login import UserMixin
 from sqlalchemy.sql import func
 

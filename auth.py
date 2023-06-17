@@ -8,10 +8,10 @@ Written by Mayank Vats <dev-theorist.e5xna@simplelogin.com>, 2021-2022
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session
 from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.exceptions import abort
-from website import db
+from __init__ import db
 from datetime import datetime
-from website.models import User, Post, Comment
-from website.tert import ElectronicMail
+from models import User, Post, Comment
+from tert import ElectronicMail
 from AuthAlpha import PassHashing, TwoFactorAuth
 
 # creating an instance of blueprint class for auth.py, later to be registered in the app (see __init__.py).

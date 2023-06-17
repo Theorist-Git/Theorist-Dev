@@ -9,10 +9,10 @@ from flask import Blueprint, render_template, request, flash, redirect, url_for,
 from flask_login import login_required, current_user
 from datetime import datetime
 from werkzeug.exceptions import abort
-from .models import Post, Comment
-from . import db
+from models import Post, Comment
+from __init__ import db
 import os
-from website.tert import ElectronicMail, Misc
+from tert import ElectronicMail, Misc
 from AuthAlpha import TwoFactorAuth
 
 views = Blueprint('views', __name__)
