@@ -1,5 +1,6 @@
 *.pyc
 *.log
+.idea
 tert.py
 __init__.py
 blogindex
