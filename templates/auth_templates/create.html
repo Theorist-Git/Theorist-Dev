@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block content %}
+
+{% if not current_user.is_authenticated %}
+
+	<div class = "container my-3">
+		<h2>Create Account</h2>
+		<form action="/create" method="POST">
+			<div class="form-group mb-3">
+				<label for="USERNAME" class="form-label">Name</label>
+				<input autofocus="autofocus" type="text" class="form-control" name="USERNAME" id="USERNAME" placeholder="Name : John Doe" />
+			</div>
+			<div class="form-group mb-3">
+				<label for="EMAIL" class="form-label">Email</label>
+				<input type="EMAIL" class="form-control" name="EMAIL" id="EMAIL" placeholder="johndoe@gmail.com" />
+				<small>We won't share your email id</small>
+			</div>
+			<input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+			<button type="submit" id="submit" class="btn btn-primary">Submit</button>
+		</form>
+
+		<!-- JINJA to display flashed messages -->
+		<div class="my-3">
+			{% with messages = get_flashed_messages(with_categories=true) %}
+				{% if messages %}
+					{% for category, message in messages %}
+						{% if category == 'error' %}
+							<div class="alert alert-danger" role="alert">
+							{{ message }}
+							</div>
+						{% else %}
+							<div class="alert alert-success" role="alert">
+							{{ message }}
+							</div>
+						{% endif %}
+					{% endfor %}
+				{% endif %}
+			{% endwith %}
+		</div>
+	</div>
+
+{% else %}
+	<div class="container">
+		<h3 align="center">You ({{ current_user.email }}) are already logged in!</h3>
+	</div>
+{% endif %}
+
+<!-- Enabling Dark Mode -->
+<style>
+	.container {
+		color: #fff !important;
+	}
+</style>
+
+{% endblock content %}

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block content %}
+
+{% if not current_user.is_authenticated %}
+
+	<div class="container my-3">
+		<h2>Login</h2>
+		<form action="/login" method="POST">
+			<div class="form-group mb-3">
+				<label for="EMAIL" class="form-label">Email</label>
+				<input autofocus="autofocus" type="email" class="form-control" name="EMAIL" id="EMAIL" aria-describedby="emailHelp" placeholder="johndoe@gmail.com" />
+				<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+			</div>
+			<div>
+				<a href="/forgot-pass">Forgot Password</a>
+			</div>
+			<div class="alert alert-primary my-3" role="alert">
+				Greetings, Traveller!
+			</div>
+			<button id="login-sub" type="submit" class="btn btn-primary">Submit</button>
+		</form>
+
+		<!-- JINJA to display flashed messages -->
+		<div class="my-3">
+			{% with messages = get_flashed_messages(with_categories=true) %}
+				{% if messages %}
+					{% for category, message in messages %}
+						{% if category == 'error' %}
+							<div class="alert alert-danger" role="alert">
+							{{ message }}
+							</div>
+						{% else %}
+							<div class="alert alert-success" role="alert">
+							{{ message }}
+							</div>
+						{% endif %}
+					{% endfor %}
+				{% endif %}
+			{% endwith %}
+		</div>
+	</div>
+
+{% else %}
+	<div class="container">
+		<h3 style="color: white" align="center">You ({{ current_user.email }}) are already logged in!</h3>
+	</div>
+{% endif %}
+
+<!-- Enabling Dark Mode -->
+<style>
+	.container {
+		color: #fff !important;
+	}
+</style>
+
+{% endblock content %}

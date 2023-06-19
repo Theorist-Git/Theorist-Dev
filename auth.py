@@ -14,28 +14,21 @@ from models import User, Post, Comment
 from tert import ElectronicMail
 from AuthAlpha import PassHashing, TwoFactorAuth
 
-# creating an instance of blueprint class for auth.py, later to be registered in the app (see __init__.py).
-auth = Blueprint('auth', __name__)
+auth = Blueprint("auth", __name__, template_folder="templates/auth_templates/")
 
 crypt = TwoFactorAuth()
 postman = ElectronicMail()
 password_police = PassHashing("argon2id")
 otp_police = PassHashing("pbkdf2:sha256")
-
+print(__doc__)
 """
 i)Referrer:
 request.referrer is used to restrict access to certain webpages (like OTP check pages).
-A list is created, namely 'auth_ref' which contains acceptable paths or 'referrals' to 
+A list named 'auth_ref' is created which contains acceptable paths or 'referrals' to 
 these webpages, access to urls is dictated via these lists. Otherwise a 403 error is raised.
 
-ii)user=current_user:
-This is returned with the template rendered for a specific view even for views that don't explicitly use it.
-This is on purpose, as it is used to Dynamically display user data and is used to render certain features
-Eg: Users with admin role don't have an option to delete account, it has to be done manually from database 
-terminal (for security purposes).
-
-iii)Decorators:
--> @auth.route : Used to define routes and accepted request methods (POST/GET) for views in auth.py
+ii)Decorators:
+-> @auth.route : Used to define routes and accepted request methods (POST/GET) for views.
 -> @login_required : Used to restrict access to certain views. These views are accessible only when the user
 is authenticated.
 -> @auth.after_request : Specifies a list of commands that are run after every request.
@@ -48,16 +41,18 @@ def apply_caching(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-XSS-Protection'] = '1; mode=block'
+    # Makes sure that back button doesn't take you back to user session after logout.
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     return response
 
 
 @auth.route('/', methods=['GET'])
-def home():
+def index():
     """
-    The Home-Page, http://127.0.0.1:5000/
+    The Home-Page
     :return: renders template index.html
     """
-    return render_template("index.html", user=current_user)
+    return render_template("index.html")
 
 
 @auth.route('/create', methods=['GET', 'POST'])
@@ -65,31 +60,28 @@ def create():
     """
     Initiates the account creation process,
 
-    1.  Data (NAME, EMAIL and OTP hash) is stored in an AES encrypted session to maintain
-        data in between requests. For more info see 'session_encryption.py'.
+    1.  (NAME, EMAIL and OTP hash) are stored in the session to persist data between
+        requests.
 
     2.  After that using an instance of SQLALCHEMY() (db), we check if the e-mail id
-        (Unique Primary Key) entered by the user already exists. If the checks are passed,
+        (Unique Key) entered by the user already exists. If the checks are passed,
         the user is redirected to auth.otp.
 
     /* P.S Regex has already been implemented in the 'create.html' and 'otp.html' files. */
 
-    :return: renders template 'create.html'
+    :return: renders template 'create.html', user=current_user
     """
-    if not request.referrer:  # 'request.referrer' is 'None' when redirected through an HTML <meta> tag.
-        for key in list(session.keys()):
-            session.pop(key)
-        flash(message="Session or OTP has expired, Please Login again!", category="error")
     if request.method == 'POST':
         session['NAME'] = request.form['USERNAME']
         session['EMAIL'] = request.form['EMAIL']
         exists = db.session.query(User.id).filter_by(email=session['EMAIL']).first() is not None
-        if exists == 0:
+        if not exists:
+            session['referred_from_create'] = True
             return redirect(url_for('auth.otp'))
         else:
-            flash('email already in use!!', category='error')
+            flash('Email already in use!', category='error')
 
-    return render_template("create.html", user=current_user)
+    return render_template("create.html")
 
 
 @auth.route('/otp', methods=['GET', 'POST'])
@@ -97,25 +89,25 @@ def otp():
     """
     Used to perform OTP checks specifically for account creation (i.e. for email verification).
 
-    1.  This page is only accessible if referred from '/create' and can persist refresh and POST
-        requests while on this page.
+    1.  This page is only accessible if session key 'referred_from_create' is set to True.
+        A threat actor cannot modify this data as the sessions are cryptographically signed
+        and tamper-proof.
 
-    2.  ('GET' request): When this page is called through an authorised referrer, a random OTP
-        of length 6 is generated and is e-mailed to the previously stored object with session
-        key -> 'EMAIL' (session['EMAIL']). This OTP's pbkdf2:sha256 (50,000 rounds) hash is then
-        stored in the encrypted session, to be used for verification of USER_OTP.
+    2.  ('GET' request): A random OTP of length 6 is generated and is e-mailed to the previously
+        stored object with session key -> 'EMAIL'.
+        This OTP's pbkdf2:sha256 (50,000 rounds) hash is then stored in the session,
+        to be used for verification of USER_OTP.
 
     3.  ('POST' request): A user can make a 'POST' request on this page to submit the OTP sent to
         their e-mail and set a password, the hash of the USER_OTP is checked against the pre-known
-        hash of the generated OTP, if the user enters the correct OTP, the backend database comes
-        into effect, also, as soon as the OTP is verified, the key, 'COMP_OTP' is deleted from the
-        session thus making them usable only once. The password is hashed using Argon2id with default
-        parameters.
+        hash of the generated OTP, if the user enters the correct OTP, its hash is deleted from
+        session and a new user table entry is made. Password is hashed using argon2id with the help
+        of AuthAlpha package.
 
-    4.  The submitted password is never-ever stored anywhere without being hashed.
+    4.  The submitted password is never-ever stored without being hashed.
 
         /*
-        P.S Again, these OTP hashes exist in the session never for more than 5 minutes.
+        P.S OTP hashes exist in the session never for more than 5 minutes.
         */
 
     5.  Database Entry: A new User object is created which is a class inherited from db.Model
@@ -125,7 +117,7 @@ def otp():
 
     /*  Successful navigation through this view creates an account and logs in the user
         redirecting them to auth.success.
-        By default, 'Remember me functionality', is disabled. You can turn it on by changing
+        By default, 'Remember me functionality', is disabled. It can be turned ON by changing
         'remember = True'. */
 
     NOTE: Turning on 'Remember me' breaks the permanent session time-out functionality. The
@@ -133,43 +125,37 @@ def otp():
 
     :return: renders template 'otp.html'
     """
-    referrer = request.referrer
-    auth_href = [
-        "/create",
-        "/otp"
-    ]
-    if referrer:
-        if referrer[21:] in auth_href:
-            if request.method == 'GET':
-                COMP_OTP = crypt.static_otp(otp_len=6)
-                postman.sendmail(session['EMAIL'],
-                                 "Theorist-Tech Email Verification",
-                                 COMP_OTP,
-                                 use_case="registration")
-                session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
-            if request.method == 'POST':
-                USER_OTP = request.form['OTP']
-                PASSWORD = password_police.generate_password_hash(request.form['PASSWORD'])
-                if otp_police.check_password_hash(session['COMP_OTP'], USER_OTP):
-                    del session['COMP_OTP']
-                    new_user = User(name=session['NAME'],
-                                    password=PASSWORD,
-                                    email=session['EMAIL'],
-                                    active=True,
-                                    last_confirmed_at=datetime.now())
-                    db.session.add(new_user)
-                    db.session.commit()
-                    login_user(new_user, remember=False)
-                    session.permanent = True
-                    return redirect(url_for('auth.success'))
+    if 'referred_from_create' in session.keys() and session['referred_from_create']:
+        if request.method == 'GET':
+            COMP_OTP = crypt.static_otp(otp_len=6)
+            postman.sendmail(session['EMAIL'],
+                             "Theorist-Tech Email Verification",
+                             COMP_OTP,
+                             use_case="registration")
+            session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
+        if request.method == 'POST':
+            USER_OTP = request.form['OTP']
+            PASSWORD = password_police.generate_password_hash(request.form['PASSWORD'])
+            if otp_police.check_password_hash(session['COMP_OTP'], USER_OTP):
+                del session['COMP_OTP']
+                del session['referred_from_create']
 
-                else:
-                    flash('Wrong otp', category='error')
-        else:
-            abort(403)
+                new_user = User(name=session['NAME'],
+                                password=PASSWORD,
+                                email=session['EMAIL'],
+                                active=True,
+                                last_confirmed_at=datetime.now())
+                db.session.add(new_user)
+                db.session.commit()
+
+                login_user(new_user, remember=False)
+                session.permanent = True
+                return redirect(url_for('auth.success'))
+            else:
+                flash('Wrong otp', category='error')
     else:
         abort(403)
-    return render_template("otp.html", user=current_user)
+    return render_template("otp.html")
 
 
 @auth.route('/success')
@@ -180,7 +166,7 @@ def success():
 
     :return: renders template 'success.html'
     """
-    return render_template("success.html", user=current_user)
+    return render_template("success.html")
 
 
 @auth.route('/login', methods=['GET', 'POST'])
@@ -199,21 +185,18 @@ def login():
 
     :return: renders template login.html
     """
-    if not request.referrer:
-        for key in list(session.keys()):
-            session.pop(key)
-        flash(message="Session or OTP has expired, Please Login again!", category="error")
     if request.method == 'POST':
         session['EMAIL'] = request.form['EMAIL']
         user = User.query.filter_by(email=session['EMAIL']).first()
         if user:
-            session['2FA_STATUS'] = [user.two_FA, user.two_FA_type]
+            session['2FA_STATUS'] = (user.two_FA, user.two_FA_type)
             return redirect(url_for('auth.mfa_login'))
         else:
+            del session['EMAIL']
             flash('Email does not exist.', category='error')
             return redirect(url_for('auth.create'))
 
-    return render_template("login.html", user=current_user)
+    return render_template("login.html")
 
 
 @auth.route('/mfa-login', methods=['GET', 'POST'])
@@ -221,14 +204,13 @@ def mfa_login():
     """
     This view is responsible for Multi-Factor Authentication during the Login process:
 
-    1.  This view is only accessible through '/login' and associated referrals,
-        and can persist refresh and 'POST' requests while on this page.
+    1.  This view is only accessible if /login sets session key '2FA_STATUS'.
 
-    2.  ('GET' request): When this page is called through an authorised referrer and if the
-        user has EMAIL type 2FA enabled a random OTP of length 6 is generated and is e-mailed
-        to the previously stored object with session key -> 'EMAIL' (session['EMAIL']).
-        This OTP's pbkdf2:sha256 (50,000 rounds) hash is then stored in the encrypted session,
-        to be used for verification of USER_OTP.
+    2.  ('GET' request): When this page is called and if the user has EMAIL type 2FA enabled,
+        a random OTP of length 6 is generated and is e-mailed to the previously stored object
+        with session key -> 'EMAIL' (session['EMAIL']).
+        The pbkdf2:sha256 (50,000 rounds) hash of the OTP is stored in the session.
+        This is then used to verify USER_OTP.
 
     3.  ('POST' request):
         (i) EMAIL type 2FA users:
@@ -254,77 +236,61 @@ def mfa_login():
 
     :return: renders template 'mfa-login.html'
     """
-    referrer = request.referrer
-    auth_href = [
-        "/login",
-        "/login?next=%2Flogout",
-        "/login?next=%2Faddblog",
-        "/login?next=%2Flogout",
-        "/login?next=%2Fsecrets",
-        "/login?next=%2Ftwo-FA",
-        "/login?next=%2Fsuccess",
-        "/login?next=%2Fdisable2FA",
-        "/login?next=%2Fdelete",
-        "/login?next=%2Fmyblogs",
-        "/mfa-login"
-    ]
-    if referrer:
-        if referrer[21:] in auth_href:
-            user = User.query.filter_by(email=session['EMAIL']).first()
-            if request.method == 'GET':
-                if session['2FA_STATUS'][0] and session['2FA_STATUS'][1] == "EMAIL":
-                    COMP_OTP = crypt.static_otp(otp_len=6)
-                    postman.sendmail(session['EMAIL'],
-                                     "Theorist-Tech Log-in Authorization",
-                                     COMP_OTP)
-                    session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
-            if request.method == 'POST':
-                if session['2FA_STATUS'][0] and session['2FA_STATUS'][1] == "EMAIL":
-                    PASSWORD = request.form['PASSWORD']
-                    USER_OTP = request.form['OTP-EMAIL']
-                    if otp_police.check_password_hash(session['COMP_OTP'], USER_OTP) and password_police.check_password_hash(user.password, PASSWORD):
-                        del session['COMP_OTP']
-                        del session['2FA_STATUS']
-                        login_user(user, remember=False)
-                        user.active = True
-                        user.last_confirmed_at = datetime.now()
-                        db.session.commit()
-                        session.permanent = True
-                        return redirect(url_for('auth.secrets'))
-                    else:
-                        flash('Wrong OTP or Password', category='error')
-                elif session['2FA_STATUS'][0] and session['2FA_STATUS'][1] == "TOTP":
-                    PASSWORD = request.form['PASSWORD']
-                    USER_OTP = request.form['OTP-TOTP']
-                    try:
-                        token = crypt.decrypt(PASSWORD.encode('utf-8'), user.two_FA_key)
-                        if crypt.verify(str(token), USER_OTP) and password_police.check_password_hash(user.password,
-                                                                                                      PASSWORD):
-                            del session['2FA_STATUS']
-                            login_user(user, remember=False)
-                            user.active = True
-                            user.last_confirmed_at = datetime.now()
-                            db.session.commit()
-                            session.permanent = True
-                            return redirect(url_for('auth.secrets'))
-                        else:
-                            flash('Incorrect password or otp, try again.', category='error')
-                    except ValueError:
-                        flash('Incorrect password or otp, try again.', category='error')
+    if '2FA_STATUS' in session.keys() and session['2FA_STATUS']:
+        user = User.query.filter_by(email=session['EMAIL']).first()
+        if request.method == 'GET':
+            if session['2FA_STATUS'][0] and session['2FA_STATUS'][1] == "EMAIL":
+                COMP_OTP = crypt.static_otp(otp_len=6)
+                postman.sendmail(session['EMAIL'],
+                                 "Theorist-Tech Log-in Authorization",
+                                 COMP_OTP)
+                session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
+        if request.method == 'POST':
+            if session['2FA_STATUS'][0] and session['2FA_STATUS'][1] == "EMAIL":
+                PASSWORD = request.form['PASSWORD']
+                USER_OTP = request.form['OTP-EMAIL']
+                if otp_police.check_password_hash(session['COMP_OTP'], USER_OTP) and \
+                        password_police.check_password_hash(user.password, PASSWORD):
+                    del session['COMP_OTP']
+                    del session['2FA_STATUS']
+                    login_user(user, remember=False)
+                    user.active = True
+                    user.last_confirmed_at = datetime.now()
+                    db.session.commit()
+                    session.permanent = True
+                    return redirect(url_for('auth.secrets'))
                 else:
-                    PASSWORD = request.form['PASSWORD']
-                    if password_police.check_password_hash(user.password, PASSWORD):
+                    flash('Wrong OTP or Password', category='error')
+            elif session['2FA_STATUS'][0] and session['2FA_STATUS'][1] == "TOTP":
+                PASSWORD = request.form['PASSWORD']
+                USER_OTP = request.form['OTP-TOTP']
+                try:
+                    token = crypt.decrypt(PASSWORD.encode('utf-8'), user.two_FA_key)
+                    if crypt.verify(str(token), USER_OTP) and password_police.check_password_hash(user.password,
+                                                                                                  PASSWORD):
+                        del session['2FA_STATUS']
                         login_user(user, remember=False)
                         user.active = True
                         user.last_confirmed_at = datetime.now()
                         db.session.commit()
                         session.permanent = True
-                        del session['2FA_STATUS']
                         return redirect(url_for('auth.secrets'))
                     else:
-                        flash('Incorrect password, try again.', category='error')
-        else:
-            abort(403)
+                        flash('Incorrect password or otp, try again.', category='error')
+                except ValueError:
+                    flash('Incorrect password or otp, try again.', category='error')
+            else:
+                PASSWORD = request.form['PASSWORD']
+                if password_police.check_password_hash(user.password, PASSWORD):
+                    login_user(user, remember=False)
+                    user.active = True
+                    user.last_confirmed_at = datetime.now()
+                    db.session.commit()
+                    session.permanent = True
+                    del session['2FA_STATUS']
+                    return redirect(url_for('auth.secrets'))
+                else:
+                    flash('Incorrect password, try again.', category='error')
     else:
         abort(403)
     return render_template("mfa-login.html", email=session['EMAIL'], two_fa=session['2FA_STATUS'])
