@@ -2,18 +2,17 @@
 Copyright (C) Mayank Vats - All Rights Reserved
 Unauthorized copying of any file, via any medium is strictly prohibited
 Proprietary and confidential
-Written by Mayank Vats <dev-theorist.e5xna@simplelogin.com>, 2021-2022
+Written by Mayank Vats <dev-theorist.e5xna@simplelogin.com>, 2021-2023
 """
 
 from flask import Flask, render_template, url_for, flash, request
 from flask_admin import Admin, BaseView, expose
 from flask_admin.contrib.sqla import ModelView
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
-from datetime import timedelta
-from flask_login import current_user
-from werkzeug.utils import redirect
+from flask_login import LoginManager, current_user
 from flask_wtf.csrf import CSRFProtect
+from flask_sqlalchemy import SQLAlchemy
+from datetime import timedelta
+from werkzeug.utils import redirect
 from urllib.parse import quote
 from dotenv import load_dotenv
 from os import environ
@@ -36,6 +35,9 @@ def create_app():
     CSRFProtect(app)
     load_dotenv()
 
+    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://theorist:%s@localhost/theorist_dev' % \
+                              quote(environ['THEORIST_LOCALHOST_PASS'])
+
     # 256 bit security key
     app.config['WTF_CSRF_SECRET_KEY'] = environ['WTF_CSRF_SECRET_KEY']
     app.config['SECRET_KEY'] = environ['SECRET_KEY']
@@ -45,8 +47,7 @@ def create_app():
     app.config['REMEMBER_COOKIE_SECURE'] = True
     app.config['REMEMBER_COOKIE_HTTPONLY'] = True
     app.config['REMEMBER_COOKIE_SAMESITE'] = "Lax"
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://theorist:%s@localhost/theorist_dev' % \
-                                            quote(environ['THEORIST_LOCALHOST_PASS'])
+    app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     # The session will time out after 720 minutes or 12 hours
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=720)
@@ -61,38 +62,35 @@ def create_app():
     db.init_app(app)
 
     # importing view blueprints from their respective files, to be registered with the flask app.
-    # In my case views are distributed in auth.py and views.py files
     from auth import auth
     from views import views
     from docs import docs
     from AuthAlphaDocs import AuthAlpha
 
+    # To be fixed after views are fixed!!!
     app.register_blueprint(auth, url_prefix='/')
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(docs, url_prefix='/projects')
     app.register_blueprint(AuthAlpha, url_prefix='/Projects/Cryptography')
 
     # 'app.errorhandler' decorator overrides default error pages and replaces them with custom ones
+    # 404(page_not_found), 403(forbidden), 500(internal server error) are set explicitly
     @app.errorhandler(404)
     def page_not_found(_):
-        # note that we set the 404 status explicitly
         return render_template('404.html'), 404
 
     @app.errorhandler(403)
     def forbidden(_):
-        # note that we set the 403 status explicitly
         return render_template('403.html'), 403
 
     @app.errorhandler(500)
     def internal_server_error(_):
-        # note that we set the 500 status explicitly
         return render_template('500.html'), 500
 
-    # After we have defined our database models in models.py,
-    # we are importing instances of classes pointing to specific databases.
+    # Importing database model (see models.py).
     from models import User, Post, Comment
 
-    # Uncomment to remake database models ↓
+    # Will create tables if they're not there
     with app.app_context():
         db.create_all()
 
@@ -104,10 +102,11 @@ def create_app():
             :return: Boolean (True -> is_accessible) & (False -> is_not_accessible)
             """
             if current_user.is_authenticated:
-                admin_user = User.query.filter_by(role=current_user.role).first()
-                res = admin_user.role == "admin"
+                admin_user = User.query.get(current_user.id)
+                res = (admin_user.role == "admin")
                 return res
 
+        # '/' means /admin/
         @expose('/', methods=['GET', 'POST'])
         def index(self):
             if request.method == 'POST':
@@ -124,7 +123,7 @@ def create_app():
                         flash("Cannot delete admins")
                 else:
                     flash("Email invalid or doesn't exist!")
-            return self.render('admin_delete_user.html')
+            return self.render('/admin_views/admin_delete_user.html')
 
     # Adding admin views
     class MyAdminViews(ModelView):
@@ -135,8 +134,8 @@ def create_app():
             :return: Boolean (True -> is_accessible) & (False -> is_not_accessible)
             """
             if current_user.is_authenticated:
-                admin_user = User.query.filter_by(role=current_user.role).first()
-                res = admin_user.role == "admin"
+                admin_user = User.query.get(current_user.id)
+                res = (admin_user.role == "admin")
                 return res
 
         def inaccessible_callback(self, name, **kwargs):
@@ -146,23 +145,24 @@ def create_app():
             flash("Forbidden 403", category="error")
             return redirect(url_for('auth.login'))
 
-    # Adding views to admin (An instance of Admin class in flask_admin)
+    # Adding views to Admin Panel (An instance of Admin class in flask_admin)
     admin.add_view((MyAdminViews(User, db.session)))
     admin.add_view((MyAdminViews(Post, db.session)))
     admin.add_view((MyAdminViews(Comment, db.session)))
-    admin.add_view(AnalyticsView(name='Delete User', endpoint='delete_user'))
+    admin.add_view(AnalyticsView(name='Delete User', endpoint='/delete_user'))
 
     # To use flask-login to manage authentication ,we create an instance of LoginManager Class in flask-login.
     # We also have to specify which view will handle authentication, in my case the view is auth.login.
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
     login_manager.session_protection = "strong"
+
     # Configures an application. This registers an `after_request` call, and
     # attaches this `LoginManager` to it as `app.login_manager`.
     login_manager.init_app(app)
 
     @login_manager.user_loader
-    def load_user(id):
-        return User.query.get(int(id))
+    def load_user(user_id):
+        return User.query.get(user_id)
 
     return app

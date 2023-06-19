@@ -2,12 +2,8 @@
 Copyright (C) Mayank Vats - All Rights Reserved
 Unauthorized copying of any file, via any medium is strictly prohibited
 Proprietary and confidential
-Written by Mayank Vats <dev-theorist.e5xna@simplelogin.com>, 2021-2022
+Written by Mayank Vats <dev-theorist.e5xna@simplelogin.com>, 2021-2023
 """
-
-import sys
-
-sys.path.append('C:\\Users\\mayan\\Desktop\\languages\\Python 3.9\\Projects\\WebDev\\Flask\\Citadel')
 
 from __init__ import create_app
 import logging
@@ -18,9 +14,6 @@ app = create_app()
 """
     Logger logs INFO, WARNINGS, ERROR and CRITICAL logs to 'filename'
     Set the log level to anyone of the following
-    
-    P.S: cd to project/content root of your project and then paste : pytest -v -W ignore::DeprecationWarning
-    to run the tests configured.
 """
 
 logging.basicConfig(filename='WebRecord.log', level=logging.INFO,
