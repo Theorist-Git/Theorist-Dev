@@ -300,12 +300,12 @@ def mfa_login():
 @login_required
 def logout():
     """
-    Self-explanatory view, logs-out (terminates session) of a user already logged-in.
+    Logs-out (terminates session) of a user already logged-in.
     Will be automatically called after session times-out after 12 hours.
 
     :return: redirects to 'auth.login'
     """
-    user = User.query.filter_by(email=current_user.email).first()
+    user = User.query.get(current_user.id)
     user.active = False
     db.session.commit()
     for key in list(session.keys()):
@@ -323,15 +323,9 @@ def secrets():
 
     :return: renders template 'secrets.html'
     """
-    if not request.referrer:
-        try:
-            del session['COMP_OTP']
-        except KeyError:
-            pass
-        flash(message="Session or OTP has expired, Please Login again!", category="error")
     if request.method == "POST":
         if request.form['submit'] == 'EMAIL-OTP':
-            user = User.query.filter_by(email=current_user.email).first()
+            user = User.query.get(current_user.id)
             user.two_FA = True
             user.two_FA_type = "EMAIL"
             db.session.commit()
@@ -356,7 +350,7 @@ def about():
 @login_required
 def two_fa():
     """
-    Only referable from '/secrets'
+    Accessible iff 'referred_from_secrets_for_TOTP' session key is set to True.
     [I] 'GET' Request: A TOTP secret and its corresponding QR code is generated,
         Any refresh/ wrong OTP or password POST changes the TOTP tokens.
 
@@ -366,34 +360,23 @@ def two_fa():
 
     :return: renders template 'two-FA.html'
     """
-    referrer = request.referrer
-    auth_href = [
-        "/secrets",
-        "/two-FA"
-    ]
-    if referrer:
-        if referrer[21:] in auth_href:
-            if request.method == 'GET':
-                secret = crypt.totp(name=current_user.email, issuer_name="theorist-tech.com")
-            if request.method == 'POST':
-                token = request.form['SECRET']
-                USER_OTP = request.form['OTP']
-                PASSWORD = request.form['PASSWORD']
-                user = User.query.filter_by(email=current_user.email).first()
-                if crypt.verify(token, USER_OTP) and password_police.check_password_hash(user.password, PASSWORD):
-                    user.two_FA = True
-                    user.two_FA_key = crypt.encrypt(PASSWORD.encode('utf-8'), token.encode('utf-8'))
-                    user.two_FA_type = "TOTP"
-                    db.session.commit()
-                    flash('2FA enabled', category='success')
-                    return redirect(url_for('auth.secrets'))
-                else:
-                    flash('Wrong otp or Password. Key has changed!', category='error')
-                    return redirect(url_for('auth.two_fa'))
+    if request.method == 'GET':
+        secret = crypt.totp(name=current_user.email, issuer_name="theorist-dev.com")
+    if request.method == 'POST':
+        token = request.form['SECRET']
+        USER_OTP = request.form['OTP']
+        PASSWORD = request.form['PASSWORD']
+        user = User.query.filter_by(email=current_user.email).first()
+        if crypt.verify(token, USER_OTP) and password_police.check_password_hash(user.password, PASSWORD):
+            user.two_FA = True
+            user.two_FA_key = crypt.encrypt(PASSWORD.encode('utf-8'), token.encode('utf-8'))
+            user.two_FA_type = "TOTP"
+            db.session.commit()
+            flash('2FA enabled', category='success')
+            return redirect(url_for('auth.secrets'))
         else:
-            abort(403)
-    else:
-        abort(403)
+            flash('Wrong otp or Password. Key has changed!', category='error')
+            return redirect(url_for('auth.two_fa'))
     return render_template("two-FA.html", user=current_user, secret=secret)
 
 
@@ -406,7 +389,7 @@ def disable2fa():
 
     :return: redirects user to /secrets after disabling 2FA.
     """
-    user = User.query.filter_by(email=current_user.email).first()
+    user = User.query.get(current_user.id)
     user.two_FA = False
     user.two_FA_key = None
     user.two_FA_type = None
@@ -422,58 +405,55 @@ def forgot_pass():
 
     It is implemented using the following three Views:
 
-    [I]  forgot_pass : Here the user has to enter their registered email address.
-        If they post a valid email address, They are redirected to /OTP-check.
+    [I] forgot_pass : if user is authenticated, they're automatically redirected
+        to auth.otp_check and 'referred_from_forgot_pass' session key is set.
+        Else, user enters their registered email address, if it exists,
+        an email is sent to it.
 
     :return: renders template 'forgot_pass.html'
     """
-    if not request.referrer:
-        for key in list(session.keys()):
-            session.pop(key)
-        flash(message="Session or OTP has expired, Please Login again!", category="error")
-    if request.method == 'POST':
-        session['EMAIL'] = request.form['EMAIL']
-        user = User.query.filter_by(email=session['EMAIL']).first()
-        if user:
-            return redirect(url_for('auth.otp_check'))
-        else:
-            flash("No such user exists!", category='error')
+    if current_user.is_authenticated:
+        session['EMAIL'] = current_user.email
+        session['referred_from_forgot_pass'] = True
+        return redirect(url_for('auth.otp_check'))
+    else:
+        if request.method == 'POST':
+            session['EMAIL'] = request.form['EMAIL']
+            user = User.query.filter_by(email=session['EMAIL']).first()
+            if user:
+                session['referred_from_forgot_pass'] = True
+                return redirect(url_for('auth.otp_check'))
+            else:
+                flash("No such user exists!", category='error')
     return render_template("forgot-pass.html")
 
 
 @auth.route('/OTP-Check', methods=['GET', 'POST'])
 def otp_check():
     """
-    [II] OTPCheck: Referable only from /forgot_pass. When this page is called, an OTP
-        is emailed to the previously entered email address, now, If the user POSTS
-        the correct OTP, they are redirected to /pass-reset, where they will be allowed
-        to reset their password.
+    [II] OTPCheck: Accessible iff 'referred_from_forgot_pass' session key is set.
+        When this page is called, an OTP is emailed to the registered email address,
+        now, If the user POSTS the correct OTP, they are redirected to /pass-reset,
+        where they will be allowed to reset their password.
 
     :return: renders template 'OTPCheck.html'
     """
-    referrer = request.referrer
-    auth_href = [
-        "/forgot-pass",
-        "/OTP-Check"
-    ]
-    if referrer:
-        if referrer[21:] in auth_href:
-            if request.method == 'GET':
-                COMP_OTP = crypt.static_otp(otp_len=6)
-                postman.sendmail(session['EMAIL'],
-                                 "Theorist-Tech Password Reset",
-                                 COMP_OTP,
-                                 use_case="PassReset")
-                session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
-            if request.method == 'POST':
-                USER_OTP = request.form['OTP']
-                if otp_police.check_password_hash(session['COMP_OTP'], USER_OTP):
-                    del session['COMP_OTP']
-                    return redirect(url_for('auth.pass_reset'))
-                else:
-                    flash('Wrong otp', category='error')
-        else:
-            abort(403)
+    if 'referred_from_forgot_pass' in session.keys() and session['referred_from_forgot_pass']:
+        if request.method == 'GET':
+            COMP_OTP = crypt.static_otp(otp_len=6)
+            postman.sendmail(session['EMAIL'],
+                             "Theorist-Tech Password Reset",
+                             COMP_OTP,
+                             use_case="PassReset")
+            session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
+        if request.method == 'POST':
+            USER_OTP = request.form['OTP']
+            if otp_police.check_password_hash(session['COMP_OTP'], USER_OTP):
+                del session['COMP_OTP']
+                return redirect(url_for('auth.pass_reset'))
+            else:
+                flash('Wrong otp', category='error')
+
     else:
         abort(403)
     return render_template("OTPCheck.html")
@@ -482,56 +462,47 @@ def otp_check():
 @auth.route('/pass-reset', methods=['GET', 'POST'])
 def pass_reset():
     """
-    [III]pass_reset: Referable only from /OTP-Check. Here the user POSTS a new password,
-        if the user role wasn't admin, their account is updated normally, accounts with admin
-        roles will update but with role method overridden. After the updating, the user is
-        logged in with the aforementioned protocols. Resetting password disables TOTP type 2FA.
+    [III] pass_reset:
+    Here the user POSTS a new password.
+    Resetting password disables TOTP type 2FA.
 
     :return: renders template 'pass-reset.html'
     """
-    referrer = request.referrer
-    auth_href = [
-        "/OTP-Check",
-        "/pass-reset"
-    ]
-    if referrer:
-        if referrer[21:] in auth_href:
-            if request.method == 'POST':
-                PASSWORD = password_police.generate_password_hash(request.form['PASSWORD'])
-                check_password = request.form['C-PASSWORD']
-                if password_police.check_password_hash(PASSWORD, check_password):
-                    user = User.query.filter_by(email=session['EMAIL']).first()
-                    user.password = PASSWORD
-                    if user.two_FA_type == "TOTP":
-                        user.two_FA = 0
-                        user.two_FA_key = None
-                        user.two_FA_type = None
-                    db.session.commit()
-                    flash('Password changed successfully!', category='success')
-                    return redirect(url_for('auth.secrets'))
-                else:
-                    flash("The passwords don't match", category='error')
-        else:
-            abort(403)
+    if 'referred_from_forgot_pass' in session.keys() and session['referred_from_forgot_pass']:
+        if request.method == 'POST':
+            PASSWORD = password_police.generate_password_hash(request.form['PASSWORD'])
+            check_password = request.form['C-PASSWORD']
+            if password_police.check_password_hash(PASSWORD, check_password):
+                user = User.query.filter_by(email=session['EMAIL']).first()
+                user.password = PASSWORD
+                if user.two_FA_type == "TOTP":
+                    user.two_FA = 0
+                    user.two_FA_key = None
+                    user.two_FA_type = None
+                db.session.commit()
+                del session['referred_from_forgot_pass']
+                flash('Password changed successfully!', category='success')
+                return redirect(url_for('auth.secrets'))
+            else:
+                flash("The passwords don't match", category='error')
     else:
         abort(403)
 
-    return render_template("pass-reset.html", user=current_user)
+    return render_template("pass-reset.html")
 
 
 @auth.route('/delete', methods=['GET', 'POST'])
 @login_required
 def delete():
     """
-    Self-explanatory view, deletes the account, all the posts and the comments made by the user.
+    Deletes the account, all the posts and the comments made by the user.
     Users with admin role don't have an option to their delete account,
     it has to be done manually from database terminal (for security purposes).
 
     :return: renders template 'delete.html'
     """
-    if request.method == 'POST' and current_user.role != "admin":
+    if request.method == 'POST' and (current_user.role != "admin" and current_user.role != "author"):
         session['EMAIL'] = current_user.email
-        Post.query.filter_by(user_id=current_user.id).delete()
         Comment.query.filter_by(user_id=current_user.id).delete()
         User.query.filter_by(email=current_user.email).delete()
         db.session.commit()
@@ -540,4 +511,4 @@ def delete():
             session.pop(key)
         flash("Account deleted successfully")
         return redirect(url_for('auth.login'))
-    return render_template('delete.html', user=current_user)
+    return render_template('delete.html')
