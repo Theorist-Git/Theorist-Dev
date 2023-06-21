@@ -2,7 +2,7 @@
 Copyright (C) Mayank Vats - All Rights Reserved
 Unauthorized copying of any file, via any medium is strictly prohibited
 Proprietary and confidential
-Written by Mayank Vats <dev-theorist.e5xna@simplelogin.com>, 2021-2022
+Written by Mayank Vats <dev-theorist.e5xna@simplelogin.com>, 2021-2023
 """
 
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session
@@ -16,18 +16,13 @@ from AuthAlpha import PassHashing, TwoFactorAuth
 
 auth = Blueprint("auth", __name__, template_folder="templates/auth_templates/")
 
-crypt = TwoFactorAuth()
+two_factor_obj = TwoFactorAuth()
 postman = ElectronicMail()
 password_police = PassHashing("argon2id")
 otp_police = PassHashing("pbkdf2:sha256")
-print(__doc__)
-"""
-i)Referrer:
-request.referrer is used to restrict access to certain webpages (like OTP check pages).
-A list named 'auth_ref' is created which contains acceptable paths or 'referrals' to 
-these webpages, access to urls is dictated via these lists. Otherwise a 403 error is raised.
 
-ii)Decorators:
+"""
+Decorators:
 -> @auth.route : Used to define routes and accepted request methods (POST/GET) for views.
 -> @login_required : Used to restrict access to certain views. These views are accessible only when the user
 is authenticated.
@@ -127,7 +122,7 @@ def otp():
     """
     if 'referred_from_create' in session.keys() and session['referred_from_create']:
         if request.method == 'GET':
-            COMP_OTP = crypt.static_otp(otp_len=6)
+            COMP_OTP = two_factor_obj.static_otp(otp_len=6)
             postman.sendmail(session['EMAIL'],
                              "Theorist-Tech Email Verification",
                              COMP_OTP,
@@ -240,7 +235,7 @@ def mfa_login():
         user = User.query.filter_by(email=session['EMAIL']).first()
         if request.method == 'GET':
             if session['2FA_STATUS'][0] and session['2FA_STATUS'][1] == "EMAIL":
-                COMP_OTP = crypt.static_otp(otp_len=6)
+                COMP_OTP = two_factor_obj.static_otp(otp_len=6)
                 postman.sendmail(session['EMAIL'],
                                  "Theorist-Tech Log-in Authorization",
                                  COMP_OTP)
@@ -265,9 +260,10 @@ def mfa_login():
                 PASSWORD = request.form['PASSWORD']
                 USER_OTP = request.form['OTP-TOTP']
                 try:
-                    token = crypt.decrypt(PASSWORD.encode('utf-8'), user.two_FA_key)
-                    if crypt.verify(str(token), USER_OTP) and password_police.check_password_hash(user.password,
-                                                                                                  PASSWORD):
+                    token = two_factor_obj.decrypt(PASSWORD.encode('utf-8'), user.two_FA_key)
+                    if two_factor_obj.verify(str(token), USER_OTP) and \
+                            password_police.check_password_hash(user.password, PASSWORD):
+
                         del session['2FA_STATUS']
                         login_user(user, remember=False)
                         user.active = True
@@ -333,17 +329,7 @@ def secrets():
         elif request.form['submit'] == 'TOTP':
             return redirect(url_for("auth.two_fa"))
 
-    return render_template("secrets.html", user=current_user)
-
-
-@auth.route('/about', methods=['GET', 'POST'])
-def about():
-    """
-    About page, TO BE UPDATED
-
-    :return: renders template 'about.html'
-    """
-    return render_template("about.html", user=current_user)
+    return render_template("secrets.html")
 
 
 @auth.route('/two-FA', methods=['GET', 'POST'])
@@ -361,15 +347,15 @@ def two_fa():
     :return: renders template 'two-FA.html'
     """
     if request.method == 'GET':
-        secret = crypt.totp(name=current_user.email, issuer_name="theorist-dev.com")
+        secret = two_factor_obj.totp(name=current_user.email, issuer_name="theorist-dev.com")
     if request.method == 'POST':
         token = request.form['SECRET']
         USER_OTP = request.form['OTP']
         PASSWORD = request.form['PASSWORD']
         user = User.query.filter_by(email=current_user.email).first()
-        if crypt.verify(token, USER_OTP) and password_police.check_password_hash(user.password, PASSWORD):
+        if two_factor_obj.verify(token, USER_OTP) and password_police.check_password_hash(user.password, PASSWORD):
             user.two_FA = True
-            user.two_FA_key = crypt.encrypt(PASSWORD.encode('utf-8'), token.encode('utf-8'))
+            user.two_FA_key = two_factor_obj.encrypt(PASSWORD.encode('utf-8'), token.encode('utf-8'))
             user.two_FA_type = "TOTP"
             db.session.commit()
             flash('2FA enabled', category='success')
@@ -377,7 +363,7 @@ def two_fa():
         else:
             flash('Wrong otp or Password. Key has changed!', category='error')
             return redirect(url_for('auth.two_fa'))
-    return render_template("two-FA.html", user=current_user, secret=secret)
+    return render_template("two-FA.html", secret=secret)
 
 
 @auth.route('/disable2FA')
@@ -440,7 +426,7 @@ def otp_check():
     """
     if 'referred_from_forgot_pass' in session.keys() and session['referred_from_forgot_pass']:
         if request.method == 'GET':
-            COMP_OTP = crypt.static_otp(otp_len=6)
+            COMP_OTP = two_factor_obj.static_otp(otp_len=6)
             postman.sendmail(session['EMAIL'],
                              "Theorist-Tech Password Reset",
                              COMP_OTP,

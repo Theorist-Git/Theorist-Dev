@@ -1,36 +1,8 @@
 {% extends 'base.html' %}
 {% block content %}
-
+<div class="container my-3"><h2><u>Your Blogs</u></h2></div>
 <div class="container">
-    <header class="d-flex justify-content-center py-3">
-        <ul class="nav nav-pills">
-            <li class="nav-item mx-1"><a href="https://github.com/Theorist-Git/" class="nav-link active" aria-current="page">Repositories</a></li>
-            {% if current_user.role == "admin" or current_user.role == "author" %}
-            <li class="nav-item mx-1"><a href="/addblog" class="nav-link active">Write a Blog</a></li>
-            {% else %}
-            <li class="nav-item mx-1"><a href="/apply" class="nav-link active">Apply to be an Author</a></li>
-            {% endif %}
-            <li class="nav-item mx-1"><a href="#" class="nav-link active">FAQs</a></li>
-        </ul>
-    </header>
-</div>
-
-<div class="container">
-	<section class="cta-section theme-bg-dark py-5">
-		<div class="container">
-			<h2 align="center" class="heading">Theorist-Blog: A blog for everything software</h2>
-			<form method="POST" action="/blogindex" class="form-inline">
-			<div class="container">
-			  <input name="search_query" class="form-control mr-sm-2" type="search" placeholder="Search for blogs that you might enjoy" aria-label="Search">
-			  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-			</div>
-				<div class="my-2" style="text-align:center">
-			  <button class="btn-lg btn-success my-2 my-sm-0" type="submit">Search</button>
-				</div>
-			</form>
-		</div><!--//container-->
-	</section>
-	<section class="blog-list py-5 p-md-5">
+<section class="blog-list py-5 p-md-5">
 		{% if data|length != 0 %}
 			{% for i in data %}
 				<div class="container">
@@ -68,7 +40,7 @@
 					<p style="color: white; " class="lead">Looks like there are no blog posts.</p>
 					<hr class="my-4">
 					<p style="color: white; ">Click the button to add a post</p>
-					<a class="btn btn-primary btn-lg" href="/addblog" role="button">Add Post</a>
+					<a class="btn btn-primary btn-lg" href="/add-blog" role="button">Add Post</a>
 				</div>
 			</div>
 		{% endif %}
@@ -97,18 +69,10 @@
 	</footer>
 </div>
 
-<!-- Allows re-loading of page without the prompt to re-submit data(Search-Query) -->
-<script>
-    if (window.history.replaceState) {
-        window.history.replaceState(null, null, window.location.href);
-    }
-</script>
-
 <!-- Enabling Dark Mode -->
 <style>
     .container {
         color: #fff !important;
     }
 </style>
-
 {% endblock content %}

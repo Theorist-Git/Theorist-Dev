@@ -18,16 +18,15 @@
             <input class="form-control" type="text" placeholder="{{ current_user.email }}" readonly />
         </div>
         <div class="form-group mb-3">
-            <label for="CName" class="form-label">Full Name (Not a pseudonym)</label>
-            <input type="text" class="form-control" name="name" id="CName" placeholder="Name : John Doe" />
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <label>Username</label>
+            <input class="form-control" type="text" placeholder="{{ current_user.name }}" readonly />
         </div>
         <div class="form-group mb-3">
-            <label for="tech" class="form-label">What all technologies do you know?</label>
+            <label for="tech" class="form-label">Technologies you are familiar with</label>
             <input type="text" class="form-control" name="tech" id="tech" aria-describedby="emailHelp" placeholder="Eg: Flask, Tensorflow etc" />
         </div>
-        <div class="form-group">
-            <label for="role">Your Role</label>
+        <div class="form-group mb-3">
+            <label for="role">Professional Background</label>
             <select class="form-control" id="role" name="role">
                 <option>I am a student</option>
                 <option>I am a full time developer</option>
@@ -37,11 +36,11 @@
             </select>
         </div>
         <div class="form-group mb-3">
-            <label for="deg" class="form-label">Your educational Qualification</label>
-            <input type="text" class="form-control" name="deg" id="deg" aria-describedby="emailHelp" placeholder="Eg: Btech/ MS/ PhD etc" />
+            <label for="deg" class="form-label">Educational Qualification</label>
+            <input type="text" class="form-control" name="deg" id="deg" aria-describedby="emailHelp" placeholder="Eg: Btech etc" />
         </div>
         <div class="text-center">
-            <h4>Write a short application, mention any previous experiences.</h4>
+            <h4>Mention previous experiences, other articles you might have written etc</h4>
         </div>
         <div class="form-group">
             <textarea name="feed" id="feed" class="form-control" placeholder="Your Message" rows="3"></textarea>
@@ -51,6 +50,7 @@
         <div class="alert alert-primary my-3" role="alert">
             Greeting, Traveller!
         </div>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <button type="submit" id="s_ubmit" class="btn btn-primary">Submit</button>
     </form>
     <!--JINJA to display flashed messages-->

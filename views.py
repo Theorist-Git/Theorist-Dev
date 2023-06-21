@@ -2,7 +2,7 @@
 Copyright (C) Mayank Vats - All Rights Reserved
 Unauthorized copying of any file, via any medium is strictly prohibited
 Proprietary and confidential
-Written by Mayank Vats <dev-theorist.e5xna@simplelogin.com>, 2021-2022
+Written by Mayank Vats <dev-theorist.e5xna@simplelogin.com>, 2021-2023
 """
 
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session
@@ -12,18 +12,57 @@ from werkzeug.exceptions import abort
 from models import Post, Comment
 from __init__ import db
 import os
-from tert import ElectronicMail, Misc
+from tert import ElectronicMail
 from AuthAlpha import TwoFactorAuth
 
-views = Blueprint('views', __name__)
+views = Blueprint("views", __name__, template_folder="templates/views_templates/")
 crypt = TwoFactorAuth()
 postman = ElectronicMail()
-misc = Misc()
 
 
-@views.route('/addblog', methods=['GET', 'POST'])
+@views.route('/about', methods=['GET'])
+def about():
+    """
+    About page, TO BE UPDATED
+
+    :return: renders template 'about.html'
+    """
+    return render_template("about.html")
+
+
+@views.route('/blogindex', methods=['GET', 'POST'])
+def blogindex():
+    """
+    Index page of the blog, all the blogs created by the users are
+    indexed here, is managed by database model Post(see models.py).
+    Search function checks for entered keyword/phrase in a split list
+    of description and title.
+
+    :return: renders template blogindex.html and a list of all the blog data.
+    """
+    blogs = Post.query.filter_by().all()
+    match_list = blogs
+    if request.method == "POST":
+        cnt = 0
+        match_list = []
+        search_query = request.form['search_query'].lower()
+        for i in blogs:
+            search_lst = [i.data, i.author, i.desc]
+            for j in search_lst:
+                if search_query in j.lower():
+                    match_list.append(i)
+                    cnt += 1
+                    break
+        if cnt == 0:
+            flash("No such blog", category="error")
+            match_list = blogs
+
+    return render_template("blogindex.html", data=match_list)
+
+
+@views.route('/add-blog', methods=['GET', 'POST'])
 @login_required
-def addblog():
+def add_blog():
     """
     Enable registered users to make blog posts, TinyMCE is used as WYSIWYG editor,
     (see /static/plugin/tinymce). The WYSIWYG editor inherently escapes
@@ -34,7 +73,7 @@ def addblog():
     it is an extended base.html document. Comment functionality is embedded
     by default with each Blog.
 
-    :return: renders template addblog.html
+    :return: renders template add_blog.html
     """
     authorized = ["admin", "author"]
     if current_user.role in authorized:
@@ -53,7 +92,7 @@ def addblog():
                 flash('post is too short!', category='error')
             elif len(session['title']) < 1:
                 flash('Please add a good title', category='error')
-            elif Post.query.filter_by(href="/" + session['blog_name']).all():
+            elif Post.query.filter_by(href="/" + session['blog_name']).first():
                 flash('This blog already exists, please change the title to proceed', category='error')
             else:
                 new_post = Post(data=session['title'],
@@ -73,7 +112,7 @@ def addblog():
                     isFile = os.path.isfile(path)
                     if not isFile:
                         os.mkdir(path)
-                f_name = f"templates//blogindex//{directory}//{session['blog_name']}.html"
+                f_name = f"templates/blogindex/{directory}/{session['blog_name']}.html"
                 f = open(f_name, "w", encoding="utf-8", newline='')
                 f.write("""
 <!--This is an auto-generated file-->
@@ -90,79 +129,35 @@ def addblog():
                 f.close()
     else:
         return redirect(url_for('views.apply'))
-    return render_template("addblog.html", user=current_user)
-
-
-@views.route('/blogindex', methods=['GET', 'POST'])
-def blogindex():
-    """
-    Index page of the blog, all the blogs created by the users are
-    indexed here, is managed by database model Post(see models.py).
-    Search function checks for entered keyword/phrase in a split list
-    of description and title.
-
-    :return: renders template blogindex.html and a list of all the blog data.
-    """
-    fblogs = Post.query.filter_by().all()
-    blogs = fblogs
-    if request.method == "POST":
-        session['search_query'] = request.form['search_query']
-        searched_blogs = blogs[0:0]
-        for i in fblogs:
-            if session['search_query'].upper() in misc.capitalize_list(
-                    i.data.split()) or session['search_query'].upper() in misc.capitalize_list(
-                    i.desc.split()) or session['search_query'].upper() in misc.capitalize_list(i.author.split()):
-                searched_blogs.append(i)
-                blogs = searched_blogs
-        if blogs == fblogs:
-            flash("No such blog!", category="error")
-    return render_template("blogindex.html", data=blogs)
-
-
-@views.route('/feedback', methods=['GET', 'POST'])
-def feedback():
-    """
-    Feedback form, the response submitted is submitted to
-    the admin.
-
-    :return: renders template feedback.html
-    """
-    if request.method == "POST":
-        session['feed'] = request.form.get('feed')
-        if len(session['feed']) > 10:
-            postman.sendmail("bdickus172@gmail.com", "User Feedback", session['feed'])
-            flash("Your feedback has been recorded!", category="success")
-        else:
-            flash("The message needs to be longer", category="error")
-    return render_template("feedback.html")
+    return render_template("add_blog.html")
 
 
 @views.route('/apply', methods=['GET', 'POST'])
 @login_required
 def apply():
     if request.method == "POST":
-        session['apply_email'] = current_user.email
-        session['name'] = request.form.get('name')
-        session['tech'] = request.form.get('tech')
-        session['app_role'] = request.form.getlist('role')[0]
-        session['deg'] = request.form.get('deg')
-        session['application'] = request.form.get('feed')
-        if session['apply_email'] and session['name'] and session['tech'] and session['app_role'] and session['deg'] and session['application']:
-            postman.sendmail("bdickus172@Gmail.com", "Application form", f"email: {session['apply_email']}\n\n"
-                                                                         f"name: {session['name']}\n\n"
-                                                                         f"Technologies known: {session['tech']}\n\n"
-                                                                         f"Role: {session['app_role']}\n\n"
-                                                                         f"Qualification: {session['deg']}\n\n"
-                                                                         f"Application: {session['application']}\n\n")
+        apply_email = current_user.email
+        name = current_user.name
+        tech = request.form.get('tech')
+        app_role = request.form.getlist('role')[0]
+        deg = request.form.get('deg')
+        application = request.form.get('feed')
+        if apply_email and name and tech and app_role and deg and application:
+            postman.sendmail("bdickus172@Gmail.com", "Application form", f"email: {apply_email}\n\n"
+                                                                         f"name: {name}\n\n"
+                                                                         f"Technologies known: {tech}\n\n"
+                                                                         f"Role: {app_role}\n\n"
+                                                                         f"Qualification: {deg}\n\n"
+                                                                         f"Application: {application}\n\n")
             flash("Your application has been sent and will be reviewed in 2-3 days", category="success")
         else:
             flash("Please fill all the fields", category="error")
-    return render_template("apply.html", current_user=current_user)
+    return render_template("apply.html")
 
 
 @views.route('/projects', methods=['GET', 'POST'])
-def modelindex():
-    return render_template('modelindex.html')
+def projects():
+    return render_template('projects.html')
 
 
 @views.route('/generator', methods=['GET', 'POST'])
@@ -175,7 +170,7 @@ def gen():
 @views.route('/myblogs', methods=['GET', 'POST'])
 @login_required
 def myblogs():
-    my_blogs = list(Post.query.filter_by(email=current_user.email))
+    my_blogs = Post.query.filter_by(email=current_user.email).all()
     return render_template("myblogs.html", data=my_blogs)
 
 
@@ -214,4 +209,4 @@ def show_blog(_):
         comments = Comment.query.filter_by(href=f'/{title}').all()
     else:
         abort(404)
-    return render_template(f"//blogindex//{author.email}//{title}.html", tdata=title, comments=comments)
+    return render_template(f"/blogindex/{author.email}/{title}.html", tdata=title, comments=comments)

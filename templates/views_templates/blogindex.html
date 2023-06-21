@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container">
+    <header class="d-flex justify-content-center py-3">
+        <ul class="nav nav-pills">
+            <li class="nav-item mx-1"><a href="https://github.com/Theorist-Git/" target="_blank" rel="noopener noreferrer" class="nav-link active" aria-current="page">Repositories</a></li>
+            {% if current_user.role == "admin" or current_user.role == "author" %}
+            <li class="nav-item mx-1"><a href="/add-blog" rel="noopener noreferrer" class="nav-link active">Write a Blog</a></li>
+            {% else %}
+            <li class="nav-item mx-1"><a href="/apply" rel="noopener noreferrer" class="nav-link active">Apply to be an Author</a></li>
+            {% endif %}
+            <li class="nav-item mx-1"><a href="#" rel="noopener noreferrer" class="nav-link active">FAQs</a></li>
+        </ul>
+    </header>
+</div>
+
+<div class="container">
+	<section class="cta-section theme-bg-dark py-5">
+		<div class="container">
+			<h2 align="center" class="heading">Theorist-Blog</h2>
+			<form method="POST" action="/blogindex" class="form-inline">
+			<div class="container">
+			  <input name="search_query" class="form-control mr-sm-2" type="search" placeholder="Search for blogs" aria-label="Search">
+			  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+			</div>
+				<div class="my-2" style="text-align:center">
+			  <button class="btn-lg btn-success my-2 my-sm-0" type="submit">Search</button>
+				</div>
+			</form>
+			<!-- JINJA to display flashed messages -->
+			{% with messages = get_flashed_messages(with_categories=true) %}
+				{% if messages %}
+					{% for category, message in messages %}
+						{% if category == 'error' %}
+							<div class="alert alert-danger" role="alert">
+							{{ message }}
+							</div>
+						{% else %}
+							<div class="alert alert-success" role="alert">
+							{{ message }}
+							</div>
+						{% endif %}
+					{% endfor %}
+				{% endif %}
+			{% endwith %}
+		</div><!--//container-->
+	</section>
+	<section class="blog-list py-5 p-md-5">
+		{% if data|length != 0 %}
+			{% for i in data %}
+				<div class="container">
+					<button type="button" class="btn btn-primary position-relative">
+					  Reads
+					{% if i.clicks < 99 %}
+					  <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+						{{ i.clicks }}
+					  </span>
+					{% else %}
+						<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+						99+
+					  	</span>
+					{% endif %}
+					</button>
+					<div class="item mb-5">
+						<div class="media">
+							<div class="media-body">
+								<h3 class="title mb-1"><a href= "{{ i.href }}">{{ i.data }}</a></h3>
+								<div class="meta mb-1">
+									<span style="color:grey" class="date">{{ i.date }}</span><b>&nbsp;•&nbsp;</b><span style="color:grey" class="time">{{ i.time }} minute read</span><b>&nbsp;•&nbsp;</b><span style="color:grey" class="text">Author: {{ i.author }}</span>
+								</div>
+								<div class="intro">{{ i.desc }}</div>
+								<a class="more-link" href="{{ i.href }}">Read more &rarr;</a>
+							</div><!--//media-body-->
+						</div><!--//media-->
+					</div><!--//item-->
+					<hr style="height:4px">
+				</div>
+			{% endfor %}
+		{% else %}
+			<div class = "container my-3">
+				<div class="jumbotron">
+					<h1 class="display-4">Aw, snap</h1>
+					<p style="color: white; " class="lead">Looks like there are no blog posts.</p>
+					<hr class="my-4">
+					<p style="color: white; ">Click the button to add a post</p>
+					<a class="btn btn-primary btn-lg" href="/add-blog" role="button">Add Post</a>
+				</div>
+			</div>
+		{% endif %}
+	</section>
+
+	<footer class="footer text-center py-2 theme-bg-dark">
+	</footer>
+</div>
+
+<!-- Allows re-loading of page without the prompt to re-submit data(Search-Query) -->
+<script>
+    if (window.history.replaceState) {
+        window.history.replaceState(null, null, window.location.href);
+    }
+</script>
+
+<!-- Enabling Dark Mode -->
+<style>
+    .container {
+        color: #fff !important;
+    }
+</style>
+
+{% endblock content %}
