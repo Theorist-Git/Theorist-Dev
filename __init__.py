@@ -4,7 +4,6 @@ Unauthorized copying of any file, via any medium is strictly prohibited
 Proprietary and confidential
 Written by Mayank Vats <dev-theorist.e5xna@simplelogin.com>, 2021-2023
 """
-
 from flask import Flask, render_template, url_for, flash, request
 from flask_admin import Admin, BaseView, expose
 from flask_admin.contrib.sqla import ModelView

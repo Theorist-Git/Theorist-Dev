@@ -10,7 +10,7 @@ from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.exceptions import abort
 from __init__ import db
 from datetime import datetime
-from models import User, Post, Comment
+from models import User, Comment
 from tert import ElectronicMail
 from AuthAlpha import PassHashing, TwoFactorAuth
 
@@ -69,8 +69,8 @@ def create():
     if request.method == 'POST':
         session['NAME'] = request.form['USERNAME']
         session['EMAIL'] = request.form['EMAIL']
-        exists = db.session.query(User.id).filter_by(email=session['EMAIL']).first() is not None
-        if not exists:
+        exists = db.session.query(User.id).filter_by(email=session['EMAIL']).first() is None
+        if exists:
             session['referred_from_create'] = True
             return redirect(url_for('auth.otp'))
         else:
@@ -140,6 +140,7 @@ def otp():
                                 email=session['EMAIL'],
                                 active=True,
                                 last_confirmed_at=datetime.now())
+
                 db.session.add(new_user)
                 db.session.commit()
 
@@ -150,6 +151,7 @@ def otp():
                 flash('Wrong otp', category='error')
     else:
         abort(403)
+
     return render_template("otp.html")
 
 

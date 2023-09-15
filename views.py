@@ -40,13 +40,11 @@ def blogindex():
 
     :return: renders template blogindex.html and a list of all the blog data.
     """
-    blogs = Post.query.filter_by().all()
-    match_list = blogs
     if request.method == "POST":
         cnt = 0
         match_list = []
         search_query = request.form['search_query'].lower()
-        for i in blogs:
+        for i in session["blogs"]:
             search_lst = [i.data, i.author, i.desc]
             for j in search_lst:
                 if search_query in j.lower():
@@ -55,9 +53,9 @@ def blogindex():
                     break
         if cnt == 0:
             flash("No such blog", category="error")
-            match_list = blogs
+            match_list = session["blogs"]
 
-    return render_template("blogindex.html", data=match_list)
+    return render_template("blogindex.html", data=Post.query.filter_by().all())
 
 
 @views.route('/add-blog', methods=['GET', 'POST'])
@@ -83,9 +81,11 @@ def add_blog():
             session['time'] = request.form.get('time')
             session['desc'] = request.form.get('desc')
             final_title = ""
+
             for i in session['title']:
                 if i.isalpha() and i != ' ':
                     final_title += i
+
             session['blog_name'] = final_title[:10] + crypt.static_otp(otp_len=8)
 
             if len(session['post']) < 1:
@@ -109,9 +109,9 @@ def add_blog():
                 if row_count == 1:
                     parent_dir = "templates/blogindex"
                     path = os.path.join(parent_dir, directory)
-                    isFile = os.path.isfile(path)
-                    if not isFile:
-                        os.mkdir(path)
+                    is_dir = os.path.isdir(path)
+                    if not is_dir:
+                        os.makedirs(path)
                 f_name = f"templates/blogindex/{directory}/{session['blog_name']}.html"
                 f = open(f_name, "w", encoding="utf-8", newline='')
                 f.write("""
@@ -164,7 +164,7 @@ def projects():
 def gen():
     if request.method == 'POST':
         session['post'] = request.form.get('WYSIWYG')
-    return render_template("CodeGen.html", user=current_user)
+    return render_template("CodeGen.html")
 
 
 @views.route('/myblogs', methods=['GET', 'POST'])
