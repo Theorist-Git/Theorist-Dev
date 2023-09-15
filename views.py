@@ -12,12 +12,17 @@ from werkzeug.exceptions import abort
 from models import Post, Comment
 from __init__ import db
 import os
-from tert import ElectronicMail
+from PyCourier import PyCourier
 from AuthAlpha import TwoFactorAuth
+from dotenv import load_dotenv
+from os import environ
+
+load_dotenv()
+sender = environ['SENDER']
+password = environ['PASSWORD']
 
 views = Blueprint("views", __name__, template_folder="templates/views_templates/")
 crypt = TwoFactorAuth()
-postman = ElectronicMail()
 
 
 @views.route('/about', methods=['GET'])
@@ -143,12 +148,26 @@ def apply():
         deg = request.form.get('deg')
         application = request.form.get('feed')
         if apply_email and name and tech and app_role and deg and application:
-            postman.sendmail("bdickus172@Gmail.com", "Application form", f"email: {apply_email}\n\n"
-                                                                         f"name: {name}\n\n"
-                                                                         f"Technologies known: {tech}\n\n"
-                                                                         f"Role: {app_role}\n\n"
-                                                                         f"Qualification: {deg}\n\n"
-                                                                         f"Application: {application}\n\n")
+
+            courier = PyCourier(
+                sender_email=sender,
+                sender_password=password,
+                recipients=["bdickus172@gmail.com", ],
+                message=f"""\
+                Theorist-Dev Blog Author Request:\n
+                Email:{apply_email}\n
+                Name:{name}\n
+                Tech:{tech}\n
+                Role:{app_role}\n
+                deg:{deg}\n
+                Application:{application}\n
+                """,
+                msg_type="plain",
+                subject="Theorist-Dev Blog Author Request"
+            )
+
+            courier.send_courier()
+
             flash("Your application has been sent and will be reviewed in 2-3 days", category="success")
         else:
             flash("Please fill all the fields", category="error")

@@ -113,8 +113,18 @@ def create_app():
                 if EMAIL and User.query.filter_by(email=EMAIL).first() is not None:
                     del_user = User.query.filter_by(email=EMAIL).first()
                     if del_user.role != "admin":
+                        import os
                         Post.query.filter_by(user_id=del_user.id).delete()
                         Comment.query.filter_by(user_id=del_user.id).delete()
+
+                        parent_dir = "templates/blogindex"
+                        path = os.path.join(parent_dir, del_user.email)
+
+                        is_dir = os.path.isdir(path)
+                        if is_dir:
+                            from shutil import rmtree
+                            rmtree(path)
+
                         User.query.filter_by(email=del_user.email).delete()
                         db.session.commit()
                         flash("Account deleted successfully")

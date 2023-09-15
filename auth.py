@@ -11,13 +11,18 @@ from werkzeug.exceptions import abort
 from __init__ import db
 from datetime import datetime
 from models import User, Comment
-from tert import ElectronicMail
+from PyCourier import PyCourier
 from AuthAlpha import PassHashing, TwoFactorAuth
+from dotenv import load_dotenv
+from os import environ
+
+load_dotenv()
+sender = environ['SENDER']
+password = environ['PASSWORD']
 
 auth = Blueprint("auth", __name__, template_folder="templates/auth_templates/")
 
 two_factor_obj = TwoFactorAuth()
-postman = ElectronicMail()
 password_police = PassHashing("argon2id")
 otp_police = PassHashing("pbkdf2:sha256")
 
@@ -123,10 +128,24 @@ def otp():
     if 'referred_from_create' in session.keys() and session['referred_from_create']:
         if request.method == 'GET':
             COMP_OTP = two_factor_obj.static_otp(otp_len=6)
-            postman.sendmail(session['EMAIL'],
-                             "Theorist-Tech Email Verification",
-                             COMP_OTP,
-                             use_case="registration")
+
+            courier = PyCourier(
+                sender_email=sender,
+                sender_password=password,
+                recipients=[session['EMAIL']],
+                message=f"""\
+                Theorist-Dev Email Verification Code:
+                OTP: {COMP_OTP} (Valid for 5 minutes)
+                
+                If you didn't attempt this registration, you can safely ignore this email, someone might have typed\ 
+                it in by mistake.
+                """,
+                msg_type="plain",
+                subject="Theorist-Dev Email Verification"
+            )
+
+            courier.send_courier()
+
             session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
         if request.method == 'POST':
             USER_OTP = request.form['OTP']
@@ -238,9 +257,24 @@ def mfa_login():
         if request.method == 'GET':
             if session['2FA_STATUS'][0] and session['2FA_STATUS'][1] == "EMAIL":
                 COMP_OTP = two_factor_obj.static_otp(otp_len=6)
-                postman.sendmail(session['EMAIL'],
-                                 "Theorist-Tech Log-in Authorization",
-                                 COMP_OTP)
+
+                courier = PyCourier(
+                    sender_email=sender,
+                    sender_password=password,
+                    recipients=[session['EMAIL']],
+                    message=f"""\
+                    Theorist-Dev Email Two Factor Authentication:
+                    OTP: {COMP_OTP} (Valid for 5 minutes)
+
+                    If you didn't attempt this login, someone has your account details, change them immediately:
+                    example.com
+                    """,
+                    msg_type="plain",
+                    subject="Theorist-Dev Email Two Factor Authentication"
+                )
+
+                courier.send_courier()
+
                 session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
         if request.method == 'POST':
             if session['2FA_STATUS'][0] and session['2FA_STATUS'][1] == "EMAIL":
@@ -429,10 +463,23 @@ def otp_check():
     if 'referred_from_forgot_pass' in session.keys() and session['referred_from_forgot_pass']:
         if request.method == 'GET':
             COMP_OTP = two_factor_obj.static_otp(otp_len=6)
-            postman.sendmail(session['EMAIL'],
-                             "Theorist-Tech Password Reset",
-                             COMP_OTP,
-                             use_case="PassReset")
+
+            courier = PyCourier(
+                sender_email=sender,
+                sender_password=password,
+                recipients=[session['EMAIL']],
+                message=f"""\
+                Theorist-Dev Password Reset
+                OTP: {COMP_OTP} (Valid for 5 minutes)
+
+                If you didn't attempt this password-reset, you can safely ignore this email, someone might have typed\ 
+                it in by mistake
+                """,
+                msg_type="plain",
+                subject="Theorist-Dev Password Reset"
+            )
+            courier.send_courier()
+
             session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
         if request.method == 'POST':
             USER_OTP = request.form['OTP']
