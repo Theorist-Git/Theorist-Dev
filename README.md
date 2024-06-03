@@ -1,4 +1,4 @@
-# Theorist-Tech Website
+# Theorist-Dev Website
 
 ## Usage
 * Run the website: (Linux systems)

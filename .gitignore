@@ -4,5 +4,4 @@
 blogindex
 *.coverage
 *.env
-tert.py
 session_encrytion.py
