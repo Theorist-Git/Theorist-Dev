@@ -22,9 +22,9 @@ password = environ['PASSWORD']
 
 auth = Blueprint("auth", __name__, template_folder="templates/auth_templates/")
 
-two_factor_obj = TwoFactorAuth()
+two_factor_obj  = TwoFactorAuth()
 password_police = PassHashing("argon2id")
-otp_police = PassHashing("pbkdf2:sha256")
+otp_police      = PassHashing("pbkdf2:sha256")
 
 """
 Decorators:
@@ -383,7 +383,7 @@ def two_fa():
     :return: renders template 'two-FA.html'
     """
     if request.method == 'GET':
-        secret = two_factor_obj.totp(name=current_user.email, issuer_name="theorist-dev.com")
+        secret = two_factor_obj.totp(user_name=current_user.email, issuer_name="theorist-dev.com")
     if request.method == 'POST':
         token = request.form['SECRET']
         USER_OTP = request.form['OTP']

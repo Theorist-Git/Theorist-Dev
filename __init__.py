@@ -1,9 +1,27 @@
 """
-Copyright (C) Mayank Vats - All Rights Reserved
-Unauthorized copying of any file, via any medium is strictly prohibited
-Proprietary and confidential
-Written by Mayank Vats <dev-theorist.e5xna@simplelogin.com>, 2021-2023
+MIT License
+
+Copyright (c) [year] [fullname]
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 """
+
 from flask import Flask, render_template, url_for, flash, request
 from flask_admin import Admin, BaseView, expose
 from flask_admin.contrib.sqla import ModelView
@@ -31,6 +49,7 @@ def create_app():
     app = Flask(__name__)
     admin = Admin(app, name="Theorist", template_mode="bootstrap4")
 
+    # Ensure CSRF token is present in every request
     CSRFProtect(app)
     load_dotenv()
 
@@ -64,13 +83,11 @@ def create_app():
     from auth import auth
     from views import views
     from docs import docs
-    from AuthAlphaDocs import AuthAlpha
 
     # To be fixed after views are fixed!!!
     app.register_blueprint(auth, url_prefix='/')
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(docs, url_prefix='/projects')
-    app.register_blueprint(AuthAlpha, url_prefix='/Projects/Cryptography')
 
     # 'app.errorhandler' decorator overrides default error pages and replaces them with custom ones
     # 404(page_not_found), 403(forbidden), 500(internal server error) are set explicitly
@@ -109,27 +126,26 @@ def create_app():
         @expose('/', methods=['GET', 'POST'])
         def index(self):
             if request.method == 'POST':
-                EMAIL = request.form['EMAIL']
-                if EMAIL and User.query.filter_by(email=EMAIL).first() is not None:
-                    del_user = User.query.filter_by(email=EMAIL).first()
-                    if del_user.role != "admin":
-                        import os
-                        Post.query.filter_by(user_id=del_user.id).delete()
-                        Comment.query.filter_by(user_id=del_user.id).delete()
+                del_email = request.form['EMAIL']
+                del_user= User.query.filter_by(email=del_email).first()
 
-                        parent_dir = "templates/blogindex"
-                        path = os.path.join(parent_dir, del_user.email)
+                if del_email and del_user and del_user.role != "admin":
+                    import os
+                    Post.query.filter_by(user_id=del_user.id).delete()
+                    Comment.query.filter_by(user_id=del_user.id).delete()
 
-                        is_dir = os.path.isdir(path)
-                        if is_dir:
-                            from shutil import rmtree
-                            rmtree(path)
+                    parent_dir = "templates/blogindex"
+                    path = os.path.join(parent_dir, del_user.email)
 
-                        User.query.filter_by(email=del_user.email).delete()
-                        db.session.commit()
-                        flash("Account deleted successfully")
-                    else:
-                        flash("Cannot delete admins")
+                    is_dir = os.path.isdir(path)
+                    if is_dir:
+                        from shutil import rmtree
+                        rmtree(path)
+
+                    User.query.filter_by(email=del_user.email).delete()
+                    db.session.commit()
+                    flash("Account deleted successfully")
+
                 else:
                     flash("Email invalid or doesn't exist!")
             return self.render('/admin_views/admin_delete_user.html')
