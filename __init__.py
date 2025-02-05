@@ -1,7 +1,7 @@
 """
 MIT License
 
-Copyright (c) [year] [fullname]
+Copyright (c) 2025 Mayank Vats
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -36,13 +36,17 @@ from os import environ
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
+
 # We define an SQLAlchemy object
 db = SQLAlchemy()
 user = current_user
+
 limiter = Limiter(
         get_remote_address,
         default_limits=["200 per day", "50 per hour"],
-        storage_uri="memory://",
+        storage_uri="redis://localhost:6379",
+        storage_options={"socket_connect_timeout": 30},
+        strategy="fixed-window", # or "moving-window"
 )
 
 
