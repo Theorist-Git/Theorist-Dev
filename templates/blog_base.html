@@ -1,7 +1,12 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<div class="container my-5" style="width:100%; background-color: white">
+<div class="container my-3 p-4 bg-black" style="border-radius: 10px;">
+        <h1 class="text-primary">{{ post.title }}</h1>
+        <p class="text-muted">by {{ post.author }}</p>
+        <p class="text-muted">Time to read: {{ post.time }}</p>
+</div>
+<div class="container" style="width:100%; background-color: white; border-radius: 10px;">
 
 <!-- Highlights Code in the blog -->
 <link rel="stylesheet" type="text/css" href="/static/css/prism.css">
