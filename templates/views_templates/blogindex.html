@@ -50,18 +50,6 @@
 		{% if data|length != 0 %}
 			{% for i in data %}
 				<div class="container">
-					<button type="button" class="btn btn-primary position-relative">
-					  Reads
-					{% if i.clicks < 99 %}
-					  <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-						{{ i.clicks }}
-					  </span>
-					{% else %}
-						<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-						99+
-					  	</span>
-					{% endif %}
-					</button>
 					<div class="item mb-5">
 						<div class="media">
 							<div class="media-body">

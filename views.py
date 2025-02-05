@@ -11,18 +11,21 @@ from datetime import datetime
 from werkzeug.exceptions import abort
 from models import Post, Comment
 from __init__ import db
-import os
 from PyCourier import PyCourier
 from AuthAlpha import TwoFactorAuth
 from dotenv import load_dotenv
 from os import environ
+from bleach import clean
 
 load_dotenv()
-sender = environ['SENDER']
-password = environ['PASSWORD']
+sender      = environ['SENDER']
+password    = environ['PASSWORD']
 
-views = Blueprint("views", __name__, template_folder="templates/views_templates/")
-crypt = TwoFactorAuth()
+views       = Blueprint("views", __name__, template_folder="templates/views_templates/")
+crypt       = TwoFactorAuth()
+
+allowed_tags  = ['b', 'i', 'u', 'strong', 'em', 'p', 'br', 'ul', 'ol', 'li', 'a', 'blockquote', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'pre', 'code']
+allowed_attrs = {'a': ['href', 'title'], 'img': ['src', 'alt'], 'p': ['class'], 'pre': ['class'], 'code': ['class']}
 
 
 @views.route('/about', methods=['GET'])
@@ -78,62 +81,50 @@ def add_blog():
 
     :return: renders template add_blog.html
     """
-    authorized = ["admin", "author"]
-    if current_user.role in authorized:
-        if request.method == 'POST':
-            session['post'] = request.form.get('WYSIWYG')
-            session['title'] = request.form.get('title')
-            session['time'] = request.form.get('time')
-            session['desc'] = request.form.get('desc')
-            final_title = ""
-
-            for i in session['title']:
-                if i.isalpha() and i != ' ':
-                    final_title += i
-
-            session['blog_name'] = final_title[:10] + crypt.static_otp(otp_len=8)
-
-            if len(session['post']) < 1:
-                flash('post is too short!', category='error')
-            elif len(session['title']) < 1:
-                flash('Please add a good title', category='error')
-            elif Post.query.filter_by(href="/" + session['blog_name']).first():
-                flash('This blog already exists, please change the title to proceed', category='error')
-            else:
-                new_post = Post(data=session['title'],
-                                user_id=current_user.id,
-                                author=current_user.name,
-                                time=session['time'],
-                                desc=session['desc'],
-                                href=f"/{session['blog_name']}",
-                                email=current_user.email)
-                db.session.add(new_post)
-                db.session.commit()
-                row_count = Post.query.filter_by(user_id=current_user.id).count()
-                directory = current_user.email
-                if row_count == 1:
-                    parent_dir = "templates/blogindex"
-                    path = os.path.join(parent_dir, directory)
-                    is_dir = os.path.isdir(path)
-                    if not is_dir:
-                        os.makedirs(path)
-                f_name = f"templates/blogindex/{directory}/{session['blog_name']}.html"
-                f = open(f_name, "w", encoding="utf-8", newline='')
-                f.write("""
-<!--This is an auto-generated file-->
-{% extends 'blog_base.html' %}
-{% block blog %}
-{% raw %}
-    """)
-                f.write(session['post'])
-                f.write("""
-{% endraw %}
-{% endblock blog %}
-<!--End of auto-generated file-->
-    """)
-                f.close()
-    else:
+    authorized = ("admin", "author")
+    if current_user.role not in authorized:
         return redirect(url_for('views.apply'))
+
+    if request.method == 'POST':
+        post  = clean(request.form.get('WYSIWYG'), tags=allowed_tags, attributes=allowed_attrs, strip=True)
+        title = clean(request.form.get('title'), tags=allowed_tags, attributes=allowed_attrs, strip=True)
+        time  = clean(request.form.get('time'), tags=allowed_tags, attributes=allowed_attrs, strip=True)
+        desc  = clean(request.form.get('desc'), tags=allowed_tags, attributes=allowed_attrs, strip=True)
+        final_title = ""
+
+        for i in title:
+            if i.isalpha() and i != ' ':
+                final_title += i
+
+        blog_name = final_title[:10] + crypt.static_otp(otp_len=8)
+
+        if len(blog_name) > 50:
+            blog_name = blog_name[:50]
+
+        post_len = len(post)
+        title_len = len(title)
+        desc_len = len(desc)
+
+        if post_len < 10 or post_len > 65535:
+            flash('Post must be between 10 and 65,535 characters long', category='error')
+        elif title_len < 1 or title_len > 100:
+            flash('Title must be between 1 and 100 characters long', category='error')
+        elif desc_len < 1 or desc_len > 500:
+            flash('Description must be between 1 and 500 characters long', category='error')
+        elif Post.query.filter_by(href="/" + blog_name).first():
+            flash('This blog already exists, please change the title to proceed', category='error')
+        else:
+            new_post = Post(post=post,
+                            title=title,
+                            email=current_user.email,
+                            author=current_user.name,
+                            desc=desc,
+                            time=time,
+                            href=f"/{blog_name}",
+                            user_id=current_user.id)
+            db.session.add(new_post)
+            db.session.commit()
+
     return render_template("add_blog.html")
 
 
@@ -209,23 +200,23 @@ def show_blog(_):
     which then displays it using JINJA2.
     """
     title = request.path[1:]
-    author = Post.query.filter_by(href=request.path).first()
-    comments = Comment
-    if author and author.clicks < 99 and request.method == "GET":
-        author.clicks += 1
-        db.session.commit()
-    if author:
-        if request.method == "POST":
-            session['data'] = request.form.get('msg')
-            new_comment = Comment(name=current_user.name,
-                                  email=current_user.email,
-                                  data=session['data'],
-                                  date=datetime.now(),
-                                  user_id=current_user.id,
-                                  href=f'/{title}')
-            db.session.add(new_comment)
-            db.session.commit()
-        comments = Comment.query.filter_by(href=f'/{title}').all()
-    else:
+    post = Post.query.filter_by(href=request.path).first()
+    comments = Comment.query.filter_by(href=request.path).all()
+
+    print(post.post)
+
+    if not post:
         abort(404)
-    return render_template(f"/blogindex/{author.email}/{title}.html", tdata=title, comments=comments)
+
+    if request.method == "POST":
+        msg = request.form.get('msg')
+        new_comment = Comment(name=current_user.name,
+                              email=current_user.email,
+                              data=msg,
+                              date=datetime.now(),
+                              user_id=current_user.id,
+                              href=f'/{title}')
+        db.session.add(new_comment)
+        db.session.commit()
+
+    return render_template(f"blog_base.html", title=title, post=post, comments=comments)

@@ -9,6 +9,7 @@
 
 {% block blog %}
 <!-- All blogs inject their HTML here -->
+    {{ post.post | safe }}
 {% endblock blog %}
 
 </div>

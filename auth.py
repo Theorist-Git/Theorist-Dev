@@ -1,10 +1,3 @@
-"""
-Copyright (C) Mayank Vats - All Rights Reserved
-Unauthorized copying of any file, via any medium is strictly prohibited
-Proprietary and confidential
-Written by Mayank Vats <dev-theorist.e5xna@simplelogin.com>, 2021-2023
-"""
-
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session
 from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.exceptions import abort
@@ -17,10 +10,11 @@ from dotenv import load_dotenv
 from os import environ
 
 load_dotenv()
-sender = environ['SENDER']
-password = environ['PASSWORD']
 
-auth = Blueprint("auth", __name__, template_folder="templates/auth_templates/")
+sender          = environ['SENDER']
+password        = environ['PASSWORD']
+
+auth            = Blueprint("auth", __name__, template_folder="templates/auth_templates/")
 
 two_factor_obj  = TwoFactorAuth()
 password_police = PassHashing("argon2id")
@@ -74,8 +68,8 @@ def create():
     if request.method == 'POST':
         session['NAME'] = request.form['USERNAME']
         session['EMAIL'] = request.form['EMAIL']
-        exists = db.session.query(User.id).filter_by(email=session['EMAIL']).first() is None
-        if exists:
+        exists = db.session.query(User.id).filter_by(email=session['EMAIL']).first()
+        if not exists:
             session['referred_from_create'] = True
             return redirect(url_for('auth.otp'))
         else:
@@ -133,12 +127,11 @@ def otp():
                 sender_email=sender,
                 sender_password=password,
                 recipients=[session['EMAIL']],
-                message=f"""\
-                Theorist-Dev Email Verification Code:
-                OTP: {COMP_OTP} (Valid for 5 minutes)
+                message=f"""Theorist-Dev Email Verification Code:
+OTP: {COMP_OTP} (Valid for 5 minutes)
                 
-                If you didn't attempt this registration, you can safely ignore this email, someone might have typed\ 
-                it in by mistake.
+If you didn't attempt this registration, you can safely ignore this email, someone might have typed
+it in by mistake.
                 """,
                 msg_type="plain",
                 subject="Theorist-Dev Email Verification"
@@ -163,8 +156,10 @@ def otp():
                 db.session.add(new_user)
                 db.session.commit()
 
+                session.clear()
                 login_user(new_user, remember=False)
                 session.permanent = True
+
                 return redirect(url_for('auth.success'))
             else:
                 flash('Wrong otp', category='error')
@@ -210,7 +205,7 @@ def login():
         else:
             del session['EMAIL']
             flash('Email does not exist.', category='error')
-            return redirect(url_for('auth.create'))
+            return redirect(url_for('auth.login'))
 
     return render_template("login.html")
 
@@ -263,11 +258,11 @@ def mfa_login():
                     sender_password=password,
                     recipients=[session['EMAIL']],
                     message=f"""\
-                    Theorist-Dev Email Two Factor Authentication:
-                    OTP: {COMP_OTP} (Valid for 5 minutes)
+Theorist-Dev Email Two Factor Authentication:
+OTP: {COMP_OTP} (Valid for 5 minutes)
 
-                    If you didn't attempt this login, someone has your account details, change them immediately:
-                    example.com
+If you didn't attempt this login, someone has your account details, change them immediately:
+example.com
                     """,
                     msg_type="plain",
                     subject="Theorist-Dev Email Two Factor Authentication"
@@ -284,6 +279,8 @@ def mfa_login():
                         password_police.check_password_hash(user.password, PASSWORD):
                     del session['COMP_OTP']
                     del session['2FA_STATUS']
+
+                    session.clear()
                     login_user(user, remember=False)
                     user.active = True
                     user.last_confirmed_at = datetime.now()
@@ -301,6 +298,8 @@ def mfa_login():
                             password_police.check_password_hash(user.password, PASSWORD):
 
                         del session['2FA_STATUS']
+
+                        session.clear()
                         login_user(user, remember=False)
                         user.active = True
                         user.last_confirmed_at = datetime.now()
@@ -314,12 +313,13 @@ def mfa_login():
             else:
                 PASSWORD = request.form['PASSWORD']
                 if password_police.check_password_hash(user.password, PASSWORD):
+                    session.clear()
                     login_user(user, remember=False)
                     user.active = True
                     user.last_confirmed_at = datetime.now()
                     db.session.commit()
                     session.permanent = True
-                    del session['2FA_STATUS']
+
                     return redirect(url_for('auth.secrets'))
                 else:
                     flash('Incorrect password, try again.', category='error')

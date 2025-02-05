@@ -28,14 +28,14 @@ class Post(db.Model):
     SQLAlchemy(). Used to store Posts made by users.
     """
     id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(db.String(100))
-    date = db.Column(db.DateTime(timezone=True), default=func.now())
-    email = db.Column(db.String(254))
-    author = db.Column(db.String(150))
-    time = db.Column(db.String(10))
-    desc = db.Column(db.String(500))
-    href = db.Column(db.String(50))
-    clicks = db.Column(db.Integer, default=0)
+    post = db.Column(db.UnicodeText, nullable=False)
+    title = db.Column(db.String(100), nullable=False)
+    date = db.Column(db.DateTime(timezone=True), default=func.now(), nullable=False)
+    email = db.Column(db.String(256), nullable=False)
+    author = db.Column(db.String(150), nullable=False)
+    time = db.Column(db.String(10), nullable=False)
+    desc = db.Column(db.String(500), nullable=False)
+    href = db.Column(db.String(50), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
 
