@@ -166,13 +166,6 @@ def projects():
     return render_template('projects.html')
 
 
-@views.route('/generator', methods=['GET', 'POST'])
-def gen():
-    if request.method == 'POST':
-        session['post'] = request.form.get('WYSIWYG')
-    return render_template("CodeGen.html")
-
-
 @views.route('/myblogs', methods=['GET', 'POST'])
 @login_required
 def myblogs():
