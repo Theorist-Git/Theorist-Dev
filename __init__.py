@@ -33,10 +33,17 @@ from werkzeug.utils import redirect
 from urllib.parse import quote
 from dotenv import load_dotenv
 from os import environ
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 # We define an SQLAlchemy object
 db = SQLAlchemy()
 user = current_user
+limiter = Limiter(
+        get_remote_address,
+        default_limits=["200 per day", "50 per hour"],
+        storage_uri="memory://",
+)
 
 
 def create_app():
@@ -48,6 +55,8 @@ def create_app():
     """
     app = Flask(__name__)
     admin = Admin(app, name="Theorist", template_mode="bootstrap4")
+
+    limiter.init_app(app)
 
     # Ensure CSRF token is present in every request
     CSRFProtect(app)
@@ -82,12 +91,10 @@ def create_app():
     # importing view blueprints from their respective files, to be registered with the flask app.
     from auth import auth
     from views import views
-    from docs import docs
 
     # To be fixed after views are fixed!!!
     app.register_blueprint(auth, url_prefix='/')
     app.register_blueprint(views, url_prefix='/')
-    app.register_blueprint(docs, url_prefix='/projects')
 
     # 'app.errorhandler' decorator overrides default error pages and replaces them with custom ones
     # 404(page_not_found), 403(forbidden), 500(internal server error) are set explicitly

@@ -1,10 +1,3 @@
-"""
-Copyright (C) Mayank Vats - All Rights Reserved
-Unauthorized copying of any file, via any medium is strictly prohibited
-Proprietary and confidential
-Written by Mayank Vats <dev-theorist.e5xna@simplelogin.com>, 2021-2023
-"""
-
 from __init__ import create_app
 import logging
 # from waitress import serve

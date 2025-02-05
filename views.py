@@ -1,11 +1,4 @@
-"""
-Copyright (C) Mayank Vats - All Rights Reserved
-Unauthorized copying of any file, via any medium is strictly prohibited
-Proprietary and confidential
-Written by Mayank Vats <dev-theorist.e5xna@simplelogin.com>, 2021-2023
-"""
-
-from flask import Blueprint, render_template, request, flash, redirect, url_for, session
+from flask import Blueprint, render_template, request, flash, redirect, url_for
 from flask_login import login_required, current_user
 from datetime import datetime
 from werkzeug.exceptions import abort

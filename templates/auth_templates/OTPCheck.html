@@ -42,6 +42,24 @@
     }
 </script>
 
+<!--&lt;!&ndash; If the user leaves the page, clear the session &ndash;&gt;-->
+<!--<script>-->
+<!--      // Function to call the server to clear the session-->
+<!--      var csrfToken = "{{ csrf_token() }}";-->
+
+<!--      function clearSession() {-->
+<!--      	  var params = "csrf_token=" + encodeURIComponent(csrfToken);-->
+<!--		  // Create a Blob with the proper MIME type-->
+<!--		  var blob = new Blob([params], { type: "application/x-www-form-urlencoded" });-->
+<!--		  // Use sendBeacon to send the token-->
+<!--		  var success = navigator.sendBeacon('/clear-session', blob);-->
+<!--		  console.log('Beacon send status:', success);-->
+<!--      }-->
+
+<!--      // Attach the clearSession function to the unload event-->
+<!--      window.addEventListener('beforeunload', clearSession);-->
+<!--</script>-->
+
 <!-- Enabling Dark Mode -->
 <style>
     .container {

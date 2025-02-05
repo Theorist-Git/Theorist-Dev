@@ -1,7 +1,7 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for, session
+from flask import Blueprint, render_template, request, flash, redirect, url_for, session, jsonify
 from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.exceptions import abort
-from __init__ import db
+from __init__ import db, limiter
 from datetime import datetime
 from models import User, Comment
 from PyCourier import PyCourier
@@ -41,6 +41,7 @@ def apply_caching(response):
 
 
 @auth.route('/', methods=['GET'])
+@limiter.exempt
 def index():
     """
     The Home-Page
@@ -79,6 +80,7 @@ def create():
 
 
 @auth.route('/otp', methods=['GET', 'POST'])
+@limiter.limit("20 per day")
 def otp():
     """
     Used to perform OTP checks specifically for account creation (i.e. for email verification).
@@ -119,58 +121,62 @@ def otp():
 
     :return: renders template 'otp.html'
     """
-    if 'referred_from_create' in session.keys() and session['referred_from_create']:
-        if request.method == 'GET':
-            COMP_OTP = two_factor_obj.static_otp(otp_len=6)
+    if not ('referred_from_create' in session and session['referred_from_create']):
+        abort(403)
 
-            courier = PyCourier(
-                sender_email=sender,
-                sender_password=password,
-                recipients=[session['EMAIL']],
-                message=f"""Theorist-Dev Email Verification Code:
+    if 'EMAIL' not in session:
+        abort(403)
+
+    if request.method == 'GET':
+        COMP_OTP = two_factor_obj.static_otp(otp_len=6)
+
+        courier = PyCourier(
+            sender_email=sender,
+            sender_password=password,
+            recipients=[session['EMAIL']],
+            message=f"""Theorist-Dev Email Verification Code:
 OTP: {COMP_OTP} (Valid for 5 minutes)
-                
+            
 If you didn't attempt this registration, you can safely ignore this email, someone might have typed
 it in by mistake.
-                """,
-                msg_type="plain",
-                subject="Theorist-Dev Email Verification"
-            )
+            """,
+            msg_type="plain",
+            subject="Theorist-Dev Email Verification"
+        )
 
-            courier.send_courier()
+        courier.send_courier()
 
-            session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
-        if request.method == 'POST':
-            USER_OTP = request.form['OTP']
-            PASSWORD = password_police.generate_password_hash(request.form['PASSWORD'])
-            if otp_police.check_password_hash(session['COMP_OTP'], USER_OTP):
-                del session['COMP_OTP']
-                del session['referred_from_create']
+        session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
+    if request.method == 'POST':
+        USER_OTP = request.form['OTP']
+        PASSWORD = password_police.generate_password_hash(request.form['PASSWORD'])
+        if otp_police.check_password_hash(session['COMP_OTP'], USER_OTP):
+            del session['COMP_OTP']
+            del session['referred_from_create']
 
-                new_user = User(name=session['NAME'],
-                                password=PASSWORD,
-                                email=session['EMAIL'],
-                                active=True,
-                                last_confirmed_at=datetime.now())
+            new_user = User(name=session['NAME'],
+                            password=PASSWORD,
+                            email=session['EMAIL'],
+                            active=True,
+                            last_confirmed_at=datetime.now())
 
-                db.session.add(new_user)
-                db.session.commit()
+            db.session.add(new_user)
+            db.session.commit()
 
-                session.clear()
-                login_user(new_user, remember=False)
-                session.permanent = True
+            session.clear()
+            login_user(new_user, remember=False)
+            session.permanent = True
 
-                return redirect(url_for('auth.success'))
-            else:
-                flash('Wrong otp', category='error')
-    else:
-        abort(403)
+            return redirect(url_for('auth.success'))
+        else:
+            flash('Wrong otp', category='error')
 
     return render_template("otp.html")
 
 
 @auth.route('/success')
 @login_required
+@limiter.exempt
 def success():
     """
     The page where the user is redirected on successful creation of an account.
@@ -247,84 +253,88 @@ def mfa_login():
 
     :return: renders template 'mfa-login.html'
     """
-    if '2FA_STATUS' in session.keys() and session['2FA_STATUS']:
-        user = User.query.filter_by(email=session['EMAIL']).first()
-        if request.method == 'GET':
-            if session['2FA_STATUS'][0] and session['2FA_STATUS'][1] == "EMAIL":
-                COMP_OTP = two_factor_obj.static_otp(otp_len=6)
+    if not ('2FA_STATUS' in session and session['2FA_STATUS']):
+        abort(403)
 
-                courier = PyCourier(
-                    sender_email=sender,
-                    sender_password=password,
-                    recipients=[session['EMAIL']],
-                    message=f"""\
+    if 'EMAIL' not in session:
+        abort(403)
+
+    user = User.query.filter_by(email=session['EMAIL']).first()
+
+    if request.method == 'GET':
+        if session['2FA_STATUS'][0] and session['2FA_STATUS'][1] == "EMAIL":
+            COMP_OTP = two_factor_obj.static_otp(otp_len=6)
+
+            courier = PyCourier(
+                sender_email=sender,
+                sender_password=password,
+                recipients=[session['EMAIL']],
+                message=f"""\
 Theorist-Dev Email Two Factor Authentication:
 OTP: {COMP_OTP} (Valid for 5 minutes)
 
 If you didn't attempt this login, someone has your account details, change them immediately:
 example.com
-                    """,
-                    msg_type="plain",
-                    subject="Theorist-Dev Email Two Factor Authentication"
-                )
+                """,
+                msg_type="plain",
+                subject="Theorist-Dev Email Two Factor Authentication"
+            )
 
-                courier.send_courier()
+            courier.send_courier()
 
-                session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
-        if request.method == 'POST':
-            if session['2FA_STATUS'][0] and session['2FA_STATUS'][1] == "EMAIL":
-                PASSWORD = request.form['PASSWORD']
-                USER_OTP = request.form['OTP-EMAIL']
-                if otp_police.check_password_hash(session['COMP_OTP'], USER_OTP) and \
-                        password_police.check_password_hash(user.password, PASSWORD):
-                    del session['COMP_OTP']
-                    del session['2FA_STATUS']
+            session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
 
-                    session.clear()
-                    login_user(user, remember=False)
-                    user.active = True
-                    user.last_confirmed_at = datetime.now()
-                    db.session.commit()
-                    session.permanent = True
-                    return redirect(url_for('auth.secrets'))
-                else:
-                    flash('Wrong OTP or Password', category='error')
-            elif session['2FA_STATUS'][0] and session['2FA_STATUS'][1] == "TOTP":
-                PASSWORD = request.form['PASSWORD']
-                USER_OTP = request.form['OTP-TOTP']
-                try:
-                    token = two_factor_obj.decrypt(PASSWORD.encode('utf-8'), user.two_FA_key)
-                    if two_factor_obj.verify(str(token), USER_OTP) and \
-                            password_police.check_password_hash(user.password, PASSWORD):
+    if request.method == 'POST':
+        if session['2FA_STATUS'][0] and session['2FA_STATUS'][1] == "EMAIL":
+            PASSWORD = request.form['PASSWORD']
+            USER_OTP = request.form['OTP-EMAIL']
+            if otp_police.check_password_hash(session['COMP_OTP'], USER_OTP) and \
+                    password_police.check_password_hash(user.password, PASSWORD):
 
-                        del session['2FA_STATUS']
-
-                        session.clear()
-                        login_user(user, remember=False)
-                        user.active = True
-                        user.last_confirmed_at = datetime.now()
-                        db.session.commit()
-                        session.permanent = True
-                        return redirect(url_for('auth.secrets'))
-                    else:
-                        flash('Incorrect password or otp, try again.', category='error')
-                except ValueError:
-                    flash('Incorrect password or otp, try again.', category='error')
+                session.clear()
+                login_user(user, remember=False)
+                user.active = True
+                user.last_confirmed_at = datetime.now()
+                db.session.commit()
+                session.permanent = True
+                return redirect(url_for('auth.secrets'))
             else:
-                PASSWORD = request.form['PASSWORD']
-                if password_police.check_password_hash(user.password, PASSWORD):
+                flash('Wrong OTP or Password', category='error')
+
+        elif session['2FA_STATUS'][0] and session['2FA_STATUS'][1] == "TOTP":
+            PASSWORD = request.form['PASSWORD']
+            USER_OTP = request.form['OTP-TOTP']
+            try:
+                token = two_factor_obj.decrypt(PASSWORD.encode('utf-8'), user.two_FA_key)
+                if two_factor_obj.verify(str(token), USER_OTP) and \
+                        password_police.check_password_hash(user.password, PASSWORD):
+
                     session.clear()
                     login_user(user, remember=False)
                     user.active = True
                     user.last_confirmed_at = datetime.now()
                     db.session.commit()
                     session.permanent = True
-
                     return redirect(url_for('auth.secrets'))
                 else:
-                    flash('Incorrect password, try again.', category='error')
-    else:
-        abort(403)
+                    flash('Incorrect password or otp, try again.', category='error')
+            except ValueError:
+                flash('Incorrect password or otp, try again.', category='error')
+
+        else:
+            PASSWORD = request.form['PASSWORD']
+            if password_police.check_password_hash(user.password, PASSWORD):
+                session.clear()
+                login_user(user, remember=False)
+                user.active = True
+                user.last_confirmed_at = datetime.now()
+                db.session.commit()
+                session.permanent = True
+
+                return redirect(url_for('auth.secrets'))
+            else:
+                flash('Incorrect password, try again.', category='error')
+
     return render_template("mfa-login.html", email=session['EMAIL'], two_fa=session['2FA_STATUS'])
 
 
@@ -340,9 +350,10 @@ def logout():
     user = User.query.get(current_user.id)
     user.active = False
     db.session.commit()
-    for key in list(session.keys()):
-        session.pop(key)
+
+    session.clear()
     logout_user()
+
     return redirect(url_for('auth.login'))
 
 
@@ -384,21 +395,27 @@ def two_fa():
     """
     if request.method == 'GET':
         secret = two_factor_obj.totp(user_name=current_user.email, issuer_name="theorist-dev.com")
+
     if request.method == 'POST':
         token = request.form['SECRET']
         USER_OTP = request.form['OTP']
         PASSWORD = request.form['PASSWORD']
         user = User.query.filter_by(email=current_user.email).first()
+
         if two_factor_obj.verify(token, USER_OTP) and password_police.check_password_hash(user.password, PASSWORD):
             user.two_FA = True
             user.two_FA_key = two_factor_obj.encrypt(PASSWORD.encode('utf-8'), token.encode('utf-8'))
             user.two_FA_type = "TOTP"
             db.session.commit()
             flash('2FA enabled', category='success')
+
             return redirect(url_for('auth.secrets'))
+
         else:
             flash('Wrong otp or Password. Key has changed!', category='error')
+
             return redirect(url_for('auth.two_fa'))
+
     return render_template("two-FA.html", secret=secret)
 
 
@@ -416,7 +433,9 @@ def disable2fa():
     user.two_FA_key = None
     user.two_FA_type = None
     db.session.commit()
+
     flash('2FA disabled', category='error')
+
     return redirect(url_for('auth.secrets'))
 
 
@@ -437,20 +456,25 @@ def forgot_pass():
     if current_user.is_authenticated:
         session['EMAIL'] = current_user.email
         session['referred_from_forgot_pass'] = True
+
         return redirect(url_for('auth.otp_check'))
+
     else:
         if request.method == 'POST':
             session['EMAIL'] = request.form['EMAIL']
             user = User.query.filter_by(email=session['EMAIL']).first()
+
             if user:
                 session['referred_from_forgot_pass'] = True
                 return redirect(url_for('auth.otp_check'))
             else:
                 flash("No such user exists!", category='error')
+
     return render_template("forgot-pass.html")
 
 
 @auth.route('/OTP-Check', methods=['GET', 'POST'])
+@limiter.limit("20 per day")
 def otp_check():
     """
     [II] OTPCheck: Accessible iff 'referred_from_forgot_pass' session key is set.
@@ -460,37 +484,42 @@ def otp_check():
 
     :return: renders template 'OTPCheck.html'
     """
-    if 'referred_from_forgot_pass' in session.keys() and session['referred_from_forgot_pass']:
-        if request.method == 'GET':
-            COMP_OTP = two_factor_obj.static_otp(otp_len=6)
-
-            courier = PyCourier(
-                sender_email=sender,
-                sender_password=password,
-                recipients=[session['EMAIL']],
-                message=f"""\
-                Theorist-Dev Password Reset
-                OTP: {COMP_OTP} (Valid for 5 minutes)
-
-                If you didn't attempt this password-reset, you can safely ignore this email, someone might have typed\ 
-                it in by mistake
-                """,
-                msg_type="plain",
-                subject="Theorist-Dev Password Reset"
-            )
-            courier.send_courier()
-
-            session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
-        if request.method == 'POST':
-            USER_OTP = request.form['OTP']
-            if otp_police.check_password_hash(session['COMP_OTP'], USER_OTP):
-                del session['COMP_OTP']
-                return redirect(url_for('auth.pass_reset'))
-            else:
-                flash('Wrong otp', category='error')
-
-    else:
+    if not ('referred_from_forgot_pass' in session and session['referred_from_forgot_pass']):
         abort(403)
+
+    if 'EMAIL' not in session:
+        abort(403)
+
+    if request.method == 'GET':
+        COMP_OTP = two_factor_obj.static_otp(otp_len=6)
+
+        courier = PyCourier(
+            sender_email=sender,
+            sender_password=password,
+            recipients=[session['EMAIL']],
+            message=f"""\
+Theorist-Dev Password Reset
+OTP: {COMP_OTP} (Valid for 5 minutes)
+
+If you didn't attempt this password-reset, you can safely ignore this email, someone might have typed\ 
+it in by mistake
+            """,
+            msg_type="plain",
+            subject="Theorist-Dev Password Reset"
+        )
+        courier.send_courier()
+
+        session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=5000)
+
+    if request.method == 'POST':
+        USER_OTP = request.form['OTP']
+        if otp_police.check_password_hash(session['COMP_OTP'], USER_OTP):
+            del session['COMP_OTP']
+
+            return redirect(url_for('auth.pass_reset'))
+        else:
+            flash('Wrong otp', category='error')
+
     return render_template("OTPCheck.html")
 
 
@@ -503,25 +532,34 @@ def pass_reset():
 
     :return: renders template 'pass-reset.html'
     """
-    if 'referred_from_forgot_pass' in session.keys() and session['referred_from_forgot_pass']:
-        if request.method == 'POST':
-            PASSWORD = password_police.generate_password_hash(request.form['PASSWORD'])
-            check_password = request.form['C-PASSWORD']
-            if password_police.check_password_hash(PASSWORD, check_password):
-                user = User.query.filter_by(email=session['EMAIL']).first()
-                user.password = PASSWORD
-                if user.two_FA_type == "TOTP":
-                    user.two_FA = 0
-                    user.two_FA_key = None
-                    user.two_FA_type = None
-                db.session.commit()
-                del session['referred_from_forgot_pass']
-                flash('Password changed successfully!', category='success')
-                return redirect(url_for('auth.secrets'))
-            else:
-                flash("The passwords don't match", category='error')
-    else:
+    if not ('referred_from_forgot_pass' in session and session['referred_from_forgot_pass']):
         abort(403)
+
+    if 'EMAIL' not in session:
+        abort(403)
+
+    if request.method == 'POST':
+        PASSWORD = password_police.generate_password_hash(request.form['PASSWORD'])
+        check_password = request.form['C-PASSWORD']
+
+        if password_police.check_password_hash(PASSWORD, check_password):
+            user = User.query.filter_by(email=session['EMAIL']).first()
+            user.password = PASSWORD
+
+            if user.two_FA_type == "TOTP":
+                user.two_FA = 0
+                user.two_FA_key = None
+                user.two_FA_type = None
+
+            db.session.commit()
+
+            session.clear()
+            flash('Password changed successfully!', category='success')
+
+            return redirect(url_for('auth.secrets'))
+
+        else:
+            flash("The passwords don't match", category='error')
 
     return render_template("pass-reset.html")
 
@@ -538,12 +576,15 @@ def delete():
     """
     if request.method == 'POST' and (current_user.role != "admin" and current_user.role != "author"):
         session['EMAIL'] = current_user.email
+
         Comment.query.filter_by(user_id=current_user.id).delete()
         User.query.filter_by(email=current_user.email).delete()
         db.session.commit()
         logout_user()
-        for key in list(session.keys()):
-            session.pop(key)
+
+        session.clear()
         flash("Account deleted successfully")
+
         return redirect(url_for('auth.login'))
+
     return render_template('delete.html')
