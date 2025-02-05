@@ -203,8 +203,6 @@ def show_blog(_):
     post = Post.query.filter_by(href=request.path).first()
     comments = Comment.query.filter_by(href=request.path).all()
 
-    print(post.post)
-
     if not post:
         abort(404)
 
