@@ -45,9 +45,9 @@ def apply_caching(response):
 def index():
     """
     The Home-Page
-    :return: renders template index.html
+    :return: renders template project_index.html
     """
-    return render_template("index.html")
+    return render_template("project_index.html")
 
 
 @auth.route('/create', methods=['GET', 'POST'])

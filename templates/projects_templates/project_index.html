@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container my-5">
+    <table style="background-color: #fff;" class="table">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Project</th>
+                <th scope="col">Repository</th>
+                <th scope="col">Tech</th>
+                <th scope="col">Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <th scope="row">1</th>
+                <td>AuthAlpha</td>
+                <td>
+                    <a href="https://github.com/Theorist-Git/AuthAlpha" target="_blank" rel="noopener noreferrer">Github: Theorist-Git/AuthAlpha</a> <br />
+                    <a href="https://pypi.org/project/AuthAlpha" target="_blank" rel="noopener noreferrer">PyPI: project/AuthAlpha</a>
+                </td>
+                <td>
+                    <span style="width: 12px; height: 12px; background-color: {{ colour_map['Python'] }}; border-radius: 50%; display: inline-block; margin-right: 8px;"></span> Python <br>
+                    <span style="width: 12px; height: 12px; background-color: {{ colour_map['Cryptography'] }}; border-radius: 50%; display: inline-block; margin-right: 8px;"></span> Cryptography <br>
+                    <span style="width: 12px; height: 12px; background-color: {{ colour_map['Hashing'] }}; border-radius: 50%; display: inline-block; margin-right: 8px;"></span> Hashing <br>
+                    <span style="width: 12px; height: 12px; background-color: {{ colour_map['Auth'] }}; border-radius: 50%; display: inline-block; margin-right: 8px;"></span> Authentication <br>
+                </td>
+                <td class="long-column">A python abstraction to generate and authenticate hashes of passwords and files of any type. The package can also be used to implement classic and Time Based OTPs.
+                    <br /><a href="https://github.com/Theorist-Git/AuthAlpha?tab=readme-ov-file#authalpha" target="_blank" rel="noopener noreferrer">AuthAlpha/README.md</a>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">2</th>
+                <td>MySQL Wrapper</td>
+                <td>
+                    <a href="https://github.com/Theorist-Git/cpp_mysql_wrapper" target="_blank" rel="noopener noreferrer">Theorist-Git/MySQL Wrapper</a>
+                </td>
+                <td>
+                    <span style="width: 12px; height: 12px; background-color: {{ colour_map['C++'] }}; border-radius: 50%; display: inline-block; margin-right: 8px;"></span> C++ <br>
+                    <span style="width: 12px; height: 12px; background-color: {{ colour_map['MySQL'] }}; border-radius: 50%; display: inline-block; margin-right: 8px;"></span> MySQL <br>
+                </td>
+                <td>
+                    A wrapper around the MySQL cpp connector. Provides a convenient and safe API to interact with MySQL servers in C++
+                    <br /><a href="https://github.com/Theorist-Git/cpp_mysql_wrapper?tab=readme-ov-file#mysql-c-wrapper" target="_blank" rel="noopener noreferrer">cpp_mysql_wrapper/README.md</a>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">3</th>
+                <td>PyCourier</td>
+                <td>
+                    <a href="https://github.com/Theorist-Git/PyCourier" target="_blank" rel="noopener noreferrer">Github: Theorist-Git/PyCourier</a> <br />
+                    <a href="https://pypi.org/project/PyCourier/" target="_blank" rel="noopener noreferrer">PyPI: project/PyCourier</a>
+                </td>
+                <td>
+                    <span style="width: 12px; height: 12px; background-color: {{ colour_map['Python'] }}; border-radius: 50%; display: inline-block; margin-right: 8px;"></span> Python <br>
+                    <span style="width: 12px; height: 12px; background-color: {{ colour_map['Encryption'] }}; border-radius: 50%; display: inline-block; margin-right: 8px;"></span> Encryption <br>
+                    <span style="width: 12px; height: 12px; background-color: {{ colour_map['SMTP/Email'] }}; border-radius: 50%; display: inline-block; margin-right: 8px;"></span> SMTP/Email <br>
+                </td>
+                <td class="long-column">A fast, reliable and cross platform email package for Python. This project was born of the need for a python package to send emails that can deal with attachments.
+                    Unable to find any suitable packages, I wrote one myself. The script can send any number of attachments and also encrypt them with a given key.
+                    <br /><a href="https://github.com/Theorist-Git/PyCourier?tab=readme-ov-file#pycourier" target="_blank" rel="noopener noreferrer">pycourier/README.md</a>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">4</th>
+                <td>Steel Surface defect classification</td>
+                <td>
+                    <a href="https://github.com/Theorist-Git/SteelIndustry_DefectCLF" target="_blank" rel="noopener noreferrer">Github: Theorist-Git/DefectCLF</a> <br />
+                    <a href="https://docs.google.com/document/d/1ykY6OBKtxUlsX6rpPLFYvWrWe1vBAvEfZg6jvYxHpng/edit?usp=sharing" target="_blank" rel="noopener noreferrer">Documentation: docs/DefectCLF</a>
+                </td>
+                <td class="tech-column">
+                    <span style="width: 12px; height: 12px; background-color: {{ colour_map['Python'] }}; border-radius: 50%; display: inline-block; margin-right: 8px;"></span> Python <br>
+                    <span style="width: 12px; height: 12px; background-color: {{ colour_map['Machine Learning'] }}; border-radius: 50%; display: inline-block; margin-right: 8px;"></span> Machine Learning<br>
+                    <span style="width: 12px; height: 12px; background-color: {{ colour_map['CNNs'] }}; border-radius: 50%; display: inline-block; margin-right: 8px;"></span> CNNs<br>
+                    <span style="width: 12px; height: 12px; background-color: {{ colour_map['Jupyter Notebooks'] }}; border-radius: 50%; display: inline-block; margin-right: 8px;"></span> Jupyter Notebooks <br>
+                </td>
+                <td class="long-column">
+                    This study explores using convolutional neural networks (CNNs) for classifying steel defects in manufacturing, utilizing the
+                    <a href="https://github.com/rccohn/NEU-Cluster" target="_blank" rel="noopener noreferrer"> NEU surface defect dataset. </a> <br> The model is optimized with TensorFlow Lite (TFLite)
+                    for deployment on resource-constrained devices like single-board computers and microcontrollers, ensuring efficient defect detection and product quality control.
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">5</th>
+                <td>Waltz</td>
+                <td class="link-column">
+                    <a href="https://github.com/Theorist-Git/Waltz" target="_blank" rel="noopener noreferrer">Github: Theorist-Git/Waltz</a> <br />
+                    <a href="https://docs.google.com/document/d/14gqeLpIeCwJndUs-l_jouSY-gEcySbOBjxlXVuc6LCI/edit?usp=sharing" target="_blank" rel="noopener noreferrer">Documentation: docs/Waltz</a>
+                </td>
+                <td class="tech-column">
+                    <span style="width: 12px; height: 12px; background-color: {{ colour_map['Python'] }}; border-radius: 50%; display: inline-block; margin-right: 8px;"></span> Python <br>
+                    <span style="width: 12px; height: 12px; background-color: {{ colour_map['Flask'] }}; border-radius: 50%; display: inline-block; margin-right: 8px;"></span> Flask<br>
+                    <span style="width: 12px; height: 12px; background-color: {{ colour_map['IndexedDB'] }}; border-radius: 50%; display: inline-block; margin-right: 8px;"></span> IndexedDB<br>
+                    <span style="width: 12px; height: 12px; background-color: {{ colour_map['Cryptography'] }}; border-radius: 50%; display: inline-block; margin-right: 8px;"></span> Cryptography<br>
+                    <span style="width: 12px; height: 12px; background-color: {{ colour_map['WebCrypto'] }}; border-radius: 50%; display: inline-block; margin-right: 8px;"></span> WebCrypto API <br>
+
+                </td>
+                <td class="long-column">
+                    A password manager that uses client-side cryptography and follows a zero-knowledge architecture ensures
+                    that all sensitive data, including passwords, is encrypted on the user's device before being stored.
+                    This approach ensures that even the service provider has no access to the user's data,
+                    offering maximum privacy and security.
+                </td>
+            </tr>
+
+        </tbody>
+    </table>
+    <div class="alert alert-primary" role="alert">
+        TBD ≡ Documentation is under work, Feel free to contribute, you can create a pull request on the repo/email a html page.
+    </div>
+</div>
+
+<style>
+    td {
+        padding: 10px;
+        overflow: hidden; /* Prevent text from overflowing */
+        text-overflow: ellipsis; /* Adds an ellipsis for overflowing text */
+    }
+    .long-column {
+        width: 50%; /* Adjust the width based on your preference */
+        word-wrap: break-word; /* Breaks long words to prevent overflow */
+    }
+    .tech-column {
+        width: 20%; /* Adjust the width based on your preference */
+        word-wrap: break-word; /* Breaks long words to prevent overflow */
+    }
+    .link-column {
+        width: 20%; /* Adjust the width based on your preference */
+        word-wrap: break-word; /* Breaks long words to prevent overflow */
+    }
+
+</style>
+
+{% endblock content %}

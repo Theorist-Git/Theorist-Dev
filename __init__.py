@@ -43,7 +43,7 @@ user = current_user
 
 limiter = Limiter(
         get_remote_address,
-        default_limits=["200 per day", "50 per hour"],
+        default_limits=["2000 per day", "500 per hour"],
         storage_uri="redis://localhost:6379",
         storage_options={"socket_connect_timeout": 30},
         strategy="fixed-window", # or "moving-window"
@@ -95,10 +95,12 @@ def create_app():
     # importing view blueprints from their respective files, to be registered with the flask app.
     from auth import auth
     from views import views
+    from projects import projects
 
     # To be fixed after views are fixed!!!
     app.register_blueprint(auth, url_prefix='/')
     app.register_blueprint(views, url_prefix='/')
+    app.register_blueprint(projects, url_prefix='/project')
 
     # 'app.errorhandler' decorator overrides default error pages and replaces them with custom ones
     # 404(page_not_found), 403(forbidden), 500(internal server error) are set explicitly

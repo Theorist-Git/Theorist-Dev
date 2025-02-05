@@ -199,4 +199,6 @@ def show_blog(_):
         db.session.add(new_comment)
         db.session.commit()
 
+        return redirect(request.url)
+
     return render_template(f"blog_base.html", title=title, post=post, comments=comments)

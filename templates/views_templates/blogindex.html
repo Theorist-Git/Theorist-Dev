@@ -2,7 +2,7 @@
 {% block content %}
 
 <div class="container">
-    <header class="d-flex justify-content-center py-3">
+    <header class="d-flex justify-content-center py-4">
         <ul class="nav nav-pills">
             <li class="nav-item mx-1"><a href="https://github.com/Theorist-Git/" target="_blank" rel="noopener noreferrer" class="nav-link active" aria-current="page">Repositories</a></li>
             {% if current_user.role == "admin" or current_user.role == "author" %}
@@ -16,9 +16,9 @@
 </div>
 
 <div class="container">
-	<section class="cta-section theme-bg-dark py-5">
+	<section class="cta-section theme-bg-dark">
 		<div class="container">
-			<h2 align="center" class="heading">Theorist-Blog</h2>
+			<h2 align="center" class="heading">Search</h2>
 			<form method="POST" action="/blogindex" class="form-inline">
 			<div class="container">
 			  <input name="search_query" class="form-control mr-sm-2" type="search" placeholder="Search for blogs" aria-label="Search">
