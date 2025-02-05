@@ -49,19 +49,15 @@ def blogindex():
     :return: renders template blogindex.html and a list of all the blog data.
     """
     if request.method == "POST":
-        cnt = 0
-        match_list = []
-        search_query = request.form['search_query'].lower()
-        for i in session["blogs"]:
-            search_lst = [i.data, i.author, i.desc]
-            for j in search_lst:
-                if search_query in j.lower():
-                    match_list.append(i)
-                    cnt += 1
-                    break
-        if cnt == 0:
-            flash("No such blog", category="error")
-            match_list = session["blogs"]
+        query = request.form['search_query']
+        results = Post.query.filter(
+            (Post.title.ilike(f'%{query}%')) |
+            (Post.author.ilike(f'%{query}%')) |
+            (Post.desc.ilike(f'%{query}%'))
+        ).all()
+
+        if results:
+            return render_template("blogindex.html", data=results)
 
     return render_template("blogindex.html", data=Post.query.filter_by().all())
 
