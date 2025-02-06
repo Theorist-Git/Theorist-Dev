@@ -25,28 +25,22 @@
         <div class="container my-5">
             <hr style="border-top: 2px solid white; bottom: 100px;" class="dropdown-divider" />
         </div>
+        <div class="container my-4">
+            <h3 style="color: white" align="center"> Random Projects from my Github</h3>
+        </div>
         <div class="row align-items-md-stretch">
-            <div class="col-md-6">
+            <div class="col-md-6" id="repo-preview-1">
                 <div class="h-100 p-5 text-white bg-dark rounded-3">
-                    <h2>Change the background</h2>
-                    <p>
-                        Swap the background-color utility and add a `.text-*` color utility to mix up the jumbotron look. Then, mix and match with additional component themes and more.
-                    </p>
-                    <button class="btn btn-outline-light" type="button">
-                        Example button
-                    </button>
+                    <a href="https://github.com/Theorist-Git/{{ projects[0] }}">
+                        <img style="border-radius:20px;" height="250px" width="500px" src="https://opengraph.githubassets.com/unique-id/Theorist-Git/{{ projects[0] }}">
+                    </a>
                 </div>
             </div>
             <div class="col-md-6">
-                <div class="h-100 p-5 bg-light border rounded-3">
-                    <h2>Add borders</h2>
-                    <p>
-                        Or, keep it light and add a border for some added definition to the boundaries of your content. Be sure to look under the hood at the source HTML here as we've adjusted the alignment and sizing of both column's
-                        content for equal-height.
-                    </p>
-                    <button class="btn btn-outline-secondary" type="button">
-                        Example button
-                    </button>
+                <div class="h-100 p-5 text-white bg-dark rounded-3">
+                    <a href="https://github.com/Theorist-Git/{{ projects[1] }}">
+                        <img style="border-radius:20px;" height="250px" width="500px" src="https://opengraph.githubassets.com/unique-id/Theorist-Git/{{ projects[1] }}">
+                    </a>
                 </div>
             </div>
         </div>

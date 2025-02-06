@@ -54,7 +54,7 @@
         {% for i in comments %}
         <div class="col-12 my-3" style="background-color: #28282B; padding: 10px; border-radius:20px;;">
             <h4 id="head3" style="color: white">{{ i.name }}</h4>
-
+            <h5 style="color: gray"> {% if current_user.role == "admin" %} {{ i.email }} {% endif %}</h5>
             <span style="color: #a8a8a8">- {{ i.date }}</span> <br />
             <hr style="border-top: 2px solid white; position: relative;" class="dropdown-divider">
             <p style="color: white">{{ i.data }}</p>

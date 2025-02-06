@@ -20,6 +20,16 @@ crypt       = TwoFactorAuth()
 allowed_tags  = ['b', 'i', 'u', 'strong', 'em', 'p', 'br', 'ul', 'ol', 'li', 'a', 'blockquote', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'pre', 'code']
 allowed_attrs = {'a': ['href', 'title'], 'img': ['src', 'alt'], 'p': ['class'], 'pre': ['class'], 'code': ['class']}
 
+@views.after_request
+def apply_caching(response):
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    # Makes sure that back button doesn't take you back to user session after logout.
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    return response
+
 
 @views.route('/about', methods=['GET'])
 def about():
@@ -152,11 +162,6 @@ def apply():
         else:
             flash("Please fill all the fields", category="error")
     return render_template("apply.html")
-
-
-@views.route('/projects', methods=['GET', 'POST'])
-def projects():
-    return render_template('projects.html')
 
 
 @views.route('/myblogs', methods=['GET', 'POST'])

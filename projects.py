@@ -14,6 +14,16 @@ load_dotenv()
 
 projects = Blueprint("projects", __name__, template_folder="templates/projects_templates/")
 
+@projects.after_request
+def apply_caching(response):
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    # Makes sure that back button doesn't take you back to user session after logout.
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    return response
+
 colour_map = {
     "C": "#A8B9CC",               # Light blue (commonly associated with C)
     "C++": "#00599C",             # Blue (official color from C++ branding)

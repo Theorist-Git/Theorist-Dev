@@ -8,6 +8,7 @@ from PyCourier import PyCourier
 from AuthAlpha import PassHashing, TwoFactorAuth
 from dotenv import load_dotenv
 from os import environ
+from random import sample
 
 load_dotenv()
 
@@ -39,7 +40,6 @@ def apply_caching(response):
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     return response
 
-
 @auth.route('/', methods=['GET'])
 @limiter.exempt
 def index():
@@ -47,7 +47,23 @@ def index():
     The Home-Page
     :return: renders template project_index.html
     """
-    return render_template("index.html")
+    project_list = (
+        "PyCourier",
+        "Theorist-Dev",
+        "SteelIndustry_DefectCLF",
+        "Regression",
+        "Waltz",
+        "cpp_mysql_wrapper",
+        "AuthAlpha",
+        "leaf",
+        "ML",
+        "Encrypt0r",
+        "Open-Software-Update"
+    )
+
+    projects = sample(project_list, 2)
+
+    return render_template("index.html", projects=projects)
 
 
 @auth.route('/create', methods=['GET', 'POST'])

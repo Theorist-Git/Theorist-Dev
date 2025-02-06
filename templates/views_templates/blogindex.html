@@ -6,19 +6,18 @@
         <ul class="nav nav-pills">
             <li class="nav-item mx-1"><a href="https://github.com/Theorist-Git/" target="_blank" rel="noopener noreferrer" class="nav-link active" aria-current="page">Repositories</a></li>
             {% if current_user.role == "admin" or current_user.role == "author" %}
-            <li class="nav-item mx-1"><a href="/add-blog" rel="noopener noreferrer" class="nav-link active">Write a Blog</a></li>
+            <li class="nav-item mx-1"><a href="/add-blog" rel="noopener noreferrer" class="nav-link active">Write a Post</a></li>
             {% else %}
             <li class="nav-item mx-1"><a href="/apply" rel="noopener noreferrer" class="nav-link active">Apply to be an Author</a></li>
             {% endif %}
-            <li class="nav-item mx-1"><a href="#" rel="noopener noreferrer" class="nav-link active">FAQs</a></li>
         </ul>
     </header>
 </div>
 
 <div class="container">
-	<section class="cta-section theme-bg-dark">
+	<section class="cta-section theme-bg-dark ">
 		<div class="container">
-			<h2 align="center" class="heading">Search</h2>
+			<h2 align="center" class="heading">Search blogs and documentations</h2>
 			<form method="POST" action="/blogindex" class="form-inline">
 			<div class="container">
 			  <input name="search_query" class="form-control mr-sm-2" type="search" placeholder="Search for blogs" aria-label="Search">
