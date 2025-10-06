@@ -50,7 +50,6 @@ colour_map = {
     "CNNs": "#8E44AD",            # Purple (symbolizing complexity and advanced AI)
     "WebCrypto": "#4CAF50",  # Green (symbolizing security and trust)
     "IndexedDB": "#1565C0",  # Deep blue (symbolizing structured data and storage)
-
 }
 
 

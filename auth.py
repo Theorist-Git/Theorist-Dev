@@ -88,6 +88,26 @@ def create():
         exists = db.session.query(User.id).filter_by(email=session['EMAIL']).first()
         if not exists:
             session['referred_from_create'] = True
+
+            COMP_OTP = two_factor_obj.static_otp(otp_len=6)
+
+            courier = PyCourier(
+                sender_email=sender,
+                sender_password=password,
+                recipients=[session['EMAIL']],
+                message=f"""Theorist-Dev Email Verification Code:
+OTP: {COMP_OTP} (Valid for 5 minutes)
+
+If you didn't attempt this registration, you can safely ignore this email, someone might have typed
+it in by mistake.
+""",
+                msg_type="plain",
+                subject="Theorist-Dev Email Verification"
+            )
+
+            courier.send_courier()
+
+            session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
             return redirect(url_for('auth.otp'))
         else:
             flash('Email already in use!', category='error')
@@ -143,26 +163,6 @@ def otp():
     if 'EMAIL' not in session:
         abort(403)
 
-    if request.method == 'GET':
-        COMP_OTP = two_factor_obj.static_otp(otp_len=6)
-
-        courier = PyCourier(
-            sender_email=sender,
-            sender_password=password,
-            recipients=[session['EMAIL']],
-            message=f"""Theorist-Dev Email Verification Code:
-OTP: {COMP_OTP} (Valid for 5 minutes)
-            
-If you didn't attempt this registration, you can safely ignore this email, someone might have typed
-it in by mistake.
-            """,
-            msg_type="plain",
-            subject="Theorist-Dev Email Verification"
-        )
-
-        courier.send_courier()
-
-        session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
     if request.method == 'POST':
         USER_OTP = request.form['OTP']
         PASSWORD = password_police.generate_password_hash(request.form['PASSWORD'])
@@ -223,6 +223,28 @@ def login():
         user = User.query.filter_by(email=session['EMAIL']).first()
         if user:
             session['2FA_STATUS'] = (user.two_FA, user.two_FA_type)
+
+            if user.two_FA and user.two_FA_type == "EMAIL":
+                COMP_OTP = two_factor_obj.static_otp(otp_len=6)
+
+                courier = PyCourier(
+                    sender_email=sender,
+                    sender_password=password,
+                    recipients=[session['EMAIL']],
+                    message=f"""\
+Theorist-Dev Email Two Factor Authentication:
+OTP: {COMP_OTP} (Valid for 5 minutes)
+
+If you didn't attempt this login, someone has your account details, change them immediately:
+example.com
+                            """,
+                    msg_type="plain",
+                    subject="Theorist-Dev Email Two Factor Authentication"
+                )
+
+                courier.send_courier()
+                session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
+
             return redirect(url_for('auth.mfa_login'))
         else:
             del session['EMAIL']
@@ -269,36 +291,13 @@ def mfa_login():
 
     :return: renders template 'mfa-login.html'
     """
-    if not ('2FA_STATUS' in session and session['2FA_STATUS']):
+    if '2FA_STATUS' not in session:
         abort(403)
 
     if 'EMAIL' not in session:
         abort(403)
 
     user = User.query.filter_by(email=session['EMAIL']).first()
-
-    if request.method == 'GET':
-        if session['2FA_STATUS'][0] and session['2FA_STATUS'][1] == "EMAIL":
-            COMP_OTP = two_factor_obj.static_otp(otp_len=6)
-
-            courier = PyCourier(
-                sender_email=sender,
-                sender_password=password,
-                recipients=[session['EMAIL']],
-                message=f"""\
-Theorist-Dev Email Two Factor Authentication:
-OTP: {COMP_OTP} (Valid for 5 minutes)
-
-If you didn't attempt this login, someone has your account details, change them immediately:
-example.com
-                """,
-                msg_type="plain",
-                subject="Theorist-Dev Email Two Factor Authentication"
-            )
-
-            courier.send_courier()
-
-            session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=50000)
 
     if request.method == 'POST':
         if session['2FA_STATUS'][0] and session['2FA_STATUS'][1] == "EMAIL":
@@ -482,6 +481,25 @@ def forgot_pass():
 
             if user:
                 session['referred_from_forgot_pass'] = True
+                COMP_OTP = two_factor_obj.static_otp(otp_len=6)
+
+                courier = PyCourier(
+                    sender_email=sender,
+                    sender_password=password,
+                    recipients=[session['EMAIL']],
+                    message=f"""\
+Theorist-Dev Password Reset
+OTP: {COMP_OTP} (Valid for 5 minutes)
+
+If you didn't attempt this password-reset, you can safely ignore this email, someone might have typed\ 
+it in by mistake
+                            """,
+                    msg_type="plain",
+                    subject="Theorist-Dev Password Reset"
+                )
+                courier.send_courier()
+                session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=5000)
+
                 return redirect(url_for('auth.otp_check'))
             else:
                 flash("No such user exists!", category='error')
@@ -505,27 +523,6 @@ def otp_check():
 
     if 'EMAIL' not in session:
         abort(403)
-
-    if request.method == 'GET':
-        COMP_OTP = two_factor_obj.static_otp(otp_len=6)
-
-        courier = PyCourier(
-            sender_email=sender,
-            sender_password=password,
-            recipients=[session['EMAIL']],
-            message=f"""\
-Theorist-Dev Password Reset
-OTP: {COMP_OTP} (Valid for 5 minutes)
-
-If you didn't attempt this password-reset, you can safely ignore this email, someone might have typed\ 
-it in by mistake
-            """,
-            msg_type="plain",
-            subject="Theorist-Dev Password Reset"
-        )
-        courier.send_courier()
-
-        session['COMP_OTP'] = otp_police.generate_password_hash(COMP_OTP, cost=5000)
 
     if request.method == 'POST':
         USER_OTP = request.form['OTP']

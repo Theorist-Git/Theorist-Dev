@@ -130,10 +130,11 @@ def create_app():
             are authenticated and have an "admin" role can access admin views.
             :return: Boolean (True -> is_accessible) & (False -> is_not_accessible)
             """
-            if current_user.is_authenticated:
-                admin_user = User.query.get(current_user.id)
-                res = (admin_user.role == "admin")
-                return res
+            if not current_user.is_authenticated:
+                return False
+
+            admin_user = User.query.get(current_user.id)
+            return bool(admin_user and admin_user.role == "admin")
 
         # '/' means /admin/
         @expose('/', methods=['GET', 'POST'])
@@ -171,10 +172,11 @@ def create_app():
             are authenticated and have an "admin" role can access admin views.
             :return: Boolean (True -> is_accessible) & (False -> is_not_accessible)
             """
-            if current_user.is_authenticated:
-                admin_user = User.query.get(current_user.id)
-                res = (admin_user.role == "admin")
-                return res
+            if not current_user.is_authenticated:
+                return False
+
+            admin_user = User.query.get(current_user.id)
+            return bool(admin_user and admin_user.role == "admin")
 
         def inaccessible_callback(self, name, **kwargs):
             """
