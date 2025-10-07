@@ -4,6 +4,12 @@
 <div class="container my-3">
     <h2>Reset Password</h2>
     <form action="/pass-reset" method="POST">
+        {% if current_user.is_authenticated %}
+        <div class="form-group mb-3">
+            <label for="OLD-PASSWORD"> Old Password</label>
+            <input autofocus="autofocus" type="PASSWORD" pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*_=+-]).{8,128}$" class="form-control" name="OLD-PASSWORD" id="OLD-PASSWORD" placeholder="Password" />
+        </div>
+        {% endif %}
         <div class="form-group mb-3">
             <label for="PASSWORD">Password</label>
             <input autofocus="autofocus" type="PASSWORD" pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*_=+-]).{8,128}$" class="form-control" name="PASSWORD" id="PASSWORD" placeholder="Password" />

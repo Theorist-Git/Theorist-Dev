@@ -32,7 +32,7 @@ from datetime import timedelta
 from werkzeug.utils import redirect
 from urllib.parse import quote
 from dotenv import load_dotenv
-from os import environ
+from os import environ, getenv
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
@@ -69,9 +69,26 @@ def create_app():
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://theorist:%s@localhost/theorist_dev' % \
                               quote(environ['THEORIST_LOCALHOST_PASS'])
 
+    master_totp_secret_key  = getenv("MASTER_TOTP_SECRET_KEY")
+    wtf_csrf_secret_key     = getenv("WTF_CSRF_SECRET_KEY")
+    flask_secret_key        = getenv("SECRET_KEY")
+
+    if not master_totp_secret_key:
+        app.logger.critical("FATAL: Master TOTP key not found. Aborting....")
+        raise RuntimeError("MASTER_TOTP_SECRET_KEY not configured in ENV")
+
+    if not wtf_csrf_secret_key:
+        app.logger.critical("FATAL: CSRF key not found. Aborting....")
+        raise RuntimeError("WTF_CSRF_SECRET_KEY not configured in ENV")
+
+    if not flask_secret_key:
+        app.logger.critical("FATAL: Flask secret key not found. Aborting....")
+        raise RuntimeError("SECRET_KEY not configured in ENV")
+
     # 256 bit security key
-    app.config['WTF_CSRF_SECRET_KEY'] = environ['WTF_CSRF_SECRET_KEY']
-    app.config['SECRET_KEY'] = environ['SECRET_KEY']
+    app.config['SECRET_KEY'] = flask_secret_key
+    app.config['MASTER_TOTP_SECRET_KEY'] = master_totp_secret_key.encode('utf-8')
+    app.config['WTF_CSRF_SECRET_KEY'] = wtf_csrf_secret_key
     app.config['SESSION_COOKIE_SECURE'] = True
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'

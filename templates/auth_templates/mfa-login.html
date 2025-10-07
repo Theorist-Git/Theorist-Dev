@@ -1,33 +1,13 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<meta http-equiv="refresh" content="300; url = /login" />
 <div class="container my-3">
-    {% if two_fa[0] %}
-    <h2>Enter Password and OTP</h2>
-    {% else %}
-    <h2>Enter Password</h2>
-    {% endif %}
+    <h2>Enter OTP</h2>
     <form action="/mfa-login" method="POST">
-        <div class="form-group mb-3">
-            <label for="PASSWORD">Password</label>
-            <input autofocus="autofocus" type="password" class="form-control" name="PASSWORD" id="PASSWORD" placeholder="Password" />
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-        </div>
-        {% if two_fa[0] and two_fa[1] == "EMAIL"%}
-        <h3>OTP has been sent to {{ email }}</h3>
         <div class="mb-3">
-            <label for="OTP-EMAIL" class="form-label">OTP</label>
-            <input autofocus="autofocus" type="password" class="form-control" name="OTP-EMAIL" id="OTP-EMAIL" aria-describedby="emailHelp" placeholder="Enter otp sent to your email, valid for 5 minutes" />
+            <label for="OTP" class="form-label">OTP</label>
+            <input autofocus="autofocus" type="password" class="form-control" name="OTP" id="OTP" aria-describedby="emailHelp" placeholder="Enter otp, session valid for 5 minutes" />
         </div>
-        {% endif %}
-        {% if two_fa[0] and two_fa[1] == "TOTP"%}
-        <h3>Enter OTP from your Authenticator app</h3>
-        <div class="mb-3">
-            <label for="OTP-TOTP" class="form-label">OTP</label>
-            <input autofocus="autofocus" type="password" class="form-control" name="OTP-TOTP" id="OTP-TOTP" aria-describedby="emailHelp" placeholder="OTP" />
-        </div>
-        {% endif %}
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <button id="otp-sub" type="submit" class="btn btn-primary">Submit</button>
         <div class="alert alert-primary my-3" role="alert">

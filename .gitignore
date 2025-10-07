@@ -4,4 +4,4 @@
 blogindex
 *.coverage
 *.env
-session_encrytion.py
+venv/

@@ -16,7 +16,7 @@ class User(db.Model, UserMixin):
     active = db.Column(db.Boolean)
     last_confirmed_at = db.Column(db.DateTime())
     two_FA = db.Column(db.Boolean, default=False, nullable=False)
-    two_FA_key = db.Column(db.String(128), default=None, nullable=True)
+    two_FA_key = db.Column(db.String(256), default=None, nullable=True)
     two_FA_type = db.Column(db.String(5), default=None, nullable=True)
     role = db.Column(db.String(6), default="user", nullable=False)
     posts = db.relationship('Post')
