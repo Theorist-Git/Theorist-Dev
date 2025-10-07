@@ -35,18 +35,26 @@ from dotenv import load_dotenv
 from os import environ, getenv
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from redis import Redis
 
 
 # We define an SQLAlchemy object
 db = SQLAlchemy()
 user = current_user
+load_dotenv()
+
+redis_url = environ.get('REDIS_URL')
+redis_limiter_url = environ.get('REDIS_LIMITER_URL')
+
+if not redis_url or not redis_limiter_url:
+    raise RuntimeError("REDIS_URL or REDIS_LIMITER_URL is not configured in ENV")
 
 limiter = Limiter(
-        get_remote_address,
-        default_limits=["2000 per day", "500 per hour"],
-        storage_uri="redis://localhost:6379",
-        storage_options={"socket_connect_timeout": 30},
-        strategy="fixed-window", # or "moving-window"
+    get_remote_address,
+    default_limits=["2000 per day", "500 per hour"],
+    storage_uri=str(redis_limiter_url),
+    storage_options={"socket_connect_timeout": 30},
+    strategy="fixed-window",  # or "moving-window"
 )
 
 
@@ -62,9 +70,24 @@ def create_app():
 
     limiter.init_app(app)
 
+    redis_client = Redis.from_url(
+        redis_url,
+        decode_responses=True,
+        socket_connect_timeout=5,
+        socket_timeout=2,
+        health_check_interval=30,
+    )
+
+    try:
+        redis_client.ping()
+    except Exception as e:
+        app.logger.exception("Redis (app) not available: %s", e)
+        raise RuntimeError("Redis not available")
+
+    app.redis = redis_client
+
     # Ensure CSRF token is present in every request
     CSRFProtect(app)
-    load_dotenv()
 
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://theorist:%s@localhost/theorist_dev' % \
                               quote(environ['THEORIST_LOCALHOST_PASS'])
