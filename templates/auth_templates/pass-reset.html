@@ -3,7 +3,7 @@
 
 <div class="container my-3">
     <h2>Reset Password</h2>
-    <form action="/pass-reset" method="POST">
+    <form action="{{ url_for('auth.pass_reset', token=token) }}" method="post">
         {% if current_user.is_authenticated %}
         <div class="form-group mb-3">
             <label for="OLD-PASSWORD"> Old Password</label>

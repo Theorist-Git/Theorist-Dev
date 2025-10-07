@@ -8,10 +8,11 @@ from __init__ import db, limiter
 from datetime import datetime, timedelta, timezone
 from models import User, Comment
 from PyCourier import PyCourier
-from AuthAlpha import PassHashing, TwoFactorAuth, NonPassHashing
+from AuthAlpha import PassHashing, TwoFactorAuth
 from dotenv import load_dotenv
 from os import environ
 from random import sample
+from itsdangerous import URLSafeTimedSerializer
 
 load_dotenv()
 
@@ -469,108 +470,89 @@ def forgot_pass():
 
     """
     if current_user.is_authenticated:
-        session['EMAIL'] = current_user.email
         return redirect(url_for('auth.pass_reset'))
     else:
         if request.method == 'POST':
-            session['EMAIL'] = request.form['EMAIL']
-            session['referred_from_forgot_pass'] = True
-            user = User.query.filter_by(email=session['EMAIL']).first()
+            email = request.form['EMAIL']
+            user = User.query.filter_by(email=email).first()
 
             if user:
-                server_otp = two_factor_obj.static_otp(otp_len=6)
+                s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+                token = s.dumps(email, salt='password-reset-salt')
+                reset_link = url_for('auth.pass_reset', token=token, _external=True)
 
                 courier = PyCourier(
                     sender_email=sender,
                     sender_password=password,
-                    recipients=[session['EMAIL']],
+                    recipients=[email],
                     message=f"""\
-Theorist-Dev Password Reset
-OTP: {server_otp} (Valid for 5 minutes)
+Click the link below to reset your password:
+{reset_link}
+This link is valid for 30 minutes.
 
-If you didn't attempt this password-reset, you can safely ignore this email, someone might have typed\ 
-it in by mistake
+If you didn't request a password reset, you can safely ignore this email.
                             """,
                     msg_type="plain",
                     subject="Theorist-Dev Password Reset"
                 )
                 courier.send_courier()
-                redis_client = current_app.redis
-                redis_client.setex(_otp_key(email=session['EMAIL']), REDIS_TTL, server_otp)
-                redis_client.delete(_n_attempts_key(email=session['EMAIL']))
 
-            return redirect(url_for('auth.otp_check'))
+            flash('If an account with that email exists, a password reset link has been sent.', 'info')
+            return redirect(url_for('auth.login'))
 
     return render_template("forgot-pass.html")
 
 
-@auth.route('/OTP-Check', methods=['GET', 'POST'])
-@limiter.limit("200 per day")
-def otp_check():
+@auth.route('/pass-reset', defaults={'token': None}, methods=['GET', 'POST'])
+@auth.route('/pass-reset/<token>', methods=['GET', 'POST'])
+def pass_reset(token):
     """
+    [II] pass_reset:
 
     """
-    if not ('referred_from_forgot_pass' in session and session['referred_from_forgot_pass']):
-        abort(403)
+    if current_user.is_authenticated and token is None:
+        if request.method == 'POST':
+            user = User.query.filter_by(id=current_user.id).first()
 
-    if 'EMAIL' not in session:
-        abort(403)
+            user_password  = request.form['PASSWORD']
+            check_password = request.form['C-PASSWORD']
+            old_password   = request.form['OLD-PASSWORD']
 
-    if request.method == 'POST':
-        user_otp = request.form['OTP']
-        otp_comparison_result, status = verify_redis_otp(session['EMAIL'], user_otp)
-
-        if otp_comparison_result:
-            session['referred_from_otp_check'] = True
-            return redirect(url_for('auth.pass_reset'))
-        else:
-            if status == "EXPIRED" or status == "LOCKED":
-                flash('Your One-Time Password has expired or you have exceeded max attempts. \
-                                                            Please log in again.', category='error')
+            if password_police.check_password_hash(user.password, old_password) and user_password == check_password:
+                user.password = password_police.generate_password_hash(user_password)
+                db.session.commit()
                 session.clear()
-                return redirect(url_for('auth.forgot_pass'))
+                flash('Password changed successfully!', category='success')
 
-            flash('Wrong otp', category='error')
+                return redirect(url_for('auth.login'))
+            else:
+                flash("The passwords don't match or incorrect old password", category='error')
 
-    return render_template("OTPCheck.html")
+    elif token:
+        s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+        try:
+            email = s.loads(token, salt='password-reset-salt', max_age=1800)
+        except Exception:
+            flash('The password reset link is invalid or has expired.', category='error')
+            return redirect(url_for('auth.forgot_pass'))
 
+        if request.method == 'POST':
+            user = User.query.filter_by(email=email).first()
+            user_password = request.form['PASSWORD']
+            check_password = request.form['C-PASSWORD']
 
-@auth.route('/pass-reset', methods=['GET', 'POST'])
-def pass_reset():
-    """
-    [III] pass_reset:
-
-    """
-    if not (('referred_from_otp_check' in session and session['referred_from_otp_check']) or current_user.is_authenticated):
+            if user and user_password == check_password:
+                user.password = password_police.generate_password_hash(user_password)
+                db.session.commit()
+                session.clear()
+                flash('Password changed successfully! Please log in.', category='success')
+                return redirect(url_for('auth.login'))
+            else:
+                flash("Passwords don't match.", category='error')
+    else:
         abort(403)
 
-    if 'EMAIL' not in session:
-        abort(403)
-
-    if request.method == 'POST':
-        user = User.query.filter_by(email=session['EMAIL']).first()
-
-        user_password = request.form['PASSWORD']
-        check_password = request.form['C-PASSWORD']
-        old_password_check = True
-
-        if current_user.is_authenticated:
-            old_password = request.form['OLD-PASSWORD']
-            old_password_check = password_police.check_password_hash(user.password, old_password)
-
-        if user_password == check_password and old_password_check:
-            user.password = password_police.generate_password_hash(user_password)
-
-            db.session.commit()
-            session.clear()
-            flash('Password changed successfully!', category='success')
-
-            return redirect(url_for('auth.login'))
-
-        else:
-            flash("The passwords don't match or incorrect old password", category='error')
-
-    return render_template("pass-reset.html", current_user=current_user)
+    return render_template("pass-reset.html", current_user=current_user, token=token)
 
 
 @auth.route('/delete', methods=['GET', 'POST'])
