@@ -1,5 +1,5 @@
 import hmac
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session, current_app
 from flask_login import login_user, login_required, logout_user, current_user
 from sqlalchemy.exc import IntegrityError
@@ -12,7 +12,7 @@ from AuthAlpha import PassHashing, TwoFactorAuth
 from dotenv import load_dotenv
 from os import environ
 from random import sample
-from itsdangerous import URLSafeTimedSerializer
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadTimeSignature, BadSignature
 
 load_dotenv()
 
@@ -121,35 +121,35 @@ def index():
 @limiter.limit("10/minute;60/hour")
 def create():
     """
-    Initiates the account creation process,
 
-    1.  (NAME, EMAIL and OTP hash) are stored in the session to persist data between
-        requests.
-
-    2.  After that using an instance of SQLALCHEMY() (db), we check if the e-mail id
-        (Unique Key) entered by the user already exists. If the checks are passed,
-        the user is redirected to auth.otp.
-
-    /* P.S Regex has already been implemented in the 'create.html' and 'otp.html' files. */
-
-    :return: renders template 'create.html', user=current_user
     """
     if request.method == 'POST':
-        session['NAME'] = request.form['USERNAME']
-        session['EMAIL'] = request.form['EMAIL']
-        exists = db.session.query(User.id).filter_by(email=session['EMAIL']).first()
+        email = request.form['EMAIL']
+
+        if len(email) > 255:
+            flash("Email must be at most 255 characters")
+            return redirect(url_for('auth.create'))
+
+        exists = db.session.query(User.id).filter_by(email=email).first()
         if not exists:
-            session['referred_from_create'] = True
-            server_otp = two_factor_obj.static_otp(otp_len=6)
+            s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+
+            payload = {
+                "email": email
+            }
+
+            token = s.dumps(payload, salt='email-verify-salt')
+            create_account_link = url_for('auth.create_verify', token=token, _external=True)
 
             courier = PyCourier(
                 sender_email=sender,
                 sender_password=password,
-                recipients=[session['EMAIL']],
-                message=f"""Theorist-Dev Email Verification Code:
-OTP: {server_otp} (Valid for 5 minutes)
+                recipients=[email],
+                message=f"""Click the link below to create your account:
+{create_account_link}
+This link is valid for 30 minutes.
 
-If you didn't attempt this registration, you can safely ignore this email, someone might have typed it in by mistake.
+If you didn't request a password reset, you can safely ignore this email.
 """,
                 msg_type="plain",
                 subject="Theorist-Dev Email Verification"
@@ -157,38 +157,51 @@ If you didn't attempt this registration, you can safely ignore this email, someo
 
             courier.send_courier()
 
-            redis_client = current_app.redis
-            redis_client.setex(_otp_key(email=session['EMAIL']), REDIS_TTL, server_otp)
-            redis_client.delete(_n_attempts_key(email=session['EMAIL']))
-            return redirect(url_for('auth.otp'))
-        else:
-            flash('Email already in use!', category='error')
+        flash(f"An email has been sent to {email}. Follow its instructions to complete your account creation.",
+              "success")
 
     return render_template("create.html")
 
 
-@auth.route('/otp', methods=['GET', 'POST'])
+@auth.route('/create-verify/<token>', methods=['GET', 'POST'])
 @limiter.limit("10/minute;60/hour")
-def otp():
+def create_verify(token):
     """
 
     """
-    if not ('referred_from_create' in session and session['referred_from_create']):
+
+    if not token:
         abort(403)
 
-    if 'EMAIL' not in session:
-        abort(403)
+    s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+
+    try:
+        payload = s.loads(token, max_age=REDIS_TTL * 6, salt='email-verify-salt')
+        email = payload['email']
+
+    except (SignatureExpired, BadSignature, BadTimeSignature):
+        flash('Your email verification link has expired or is invalid. Please try again.', category='error')
+        return redirect(url_for('auth.create'))
 
     if request.method == 'POST':
-        user_password = password_police.generate_password_hash(request.form['PASSWORD'])
-        user_otp = request.form['OTP']
+        username = request.form['USERNAME']
+        user_password = request.form['PASSWORD']
+        user_password_check = request.form['C-PASSWORD']
 
-        otp_comparison_result, status = verify_redis_otp(session['EMAIL'], user_otp)
-        if otp_comparison_result:
+        if len(username) > 128:
+            flash('Username too long. Please try again.', category='error')
+            return render_template("create_verify.html", token=token)
+
+        email_exists = User.query.filter_by(email=email).first()
+        if email_exists:
+            flash('This link has already been used to create an account. Please Log in', 'error')
+            return redirect(url_for('auth.login'))
+
+        if user_password == user_password_check:
             try:
-                new_user = User(name=session['NAME'],
-                                password=user_password,
-                                email=session['EMAIL'],
+                new_user = User(name=username,
+                                password=password_police.generate_password_hash(user_password),
+                                email=email,
                                 active=True,
                                 last_confirmed_at=datetime.now(timezone.utc))
 
@@ -203,18 +216,12 @@ def otp():
 
             except IntegrityError:
                 db.session.rollback()
-                flash('This email address has just been registered. Please log in.', category='error')
-                return redirect(url_for('auth.login'))
+                flash('Username is already taken', category='error')
+                return render_template("create_verify.html", token=token)
         else:
-            if status == "EXPIRED" or status == "LOCKED":
-                flash('Your One-Time Password has expired or you have exceeded max attempts. \
-                                                            Please log in again.', category='error')
-                session.clear()
-                return redirect(url_for('auth.create'))
+            flash('Passwords do not match.', category='error')
 
-            flash('Wrong otp', category='error')
-
-    return render_template("otp.html")
+    return render_template("create_verify.html", token=token)
 
 
 @auth.route('/success')
@@ -238,13 +245,20 @@ def login():
     if current_user.is_authenticated:
         return redirect(url_for('auth.secrets'))
     if request.method == 'POST':
-        session['EMAIL'] = request.form['EMAIL']
+        email = request.form['EMAIL']
         user_pass = request.form['PASSWORD']
 
-        user = User.query.filter_by(email=session['EMAIL']).first()
+        user = User.query.filter_by(email=email).first()
         if user and password_police.check_password_hash(user.password, user_pass):
             if user.two_FA:
-                session['2FA_TYPE'] = user.two_FA_type
+
+                s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+
+                payload = {
+                    'user_id'       : user.id,
+                    'email'         : user.email,
+                    'two_FA_type'   : user.two_FA_type,
+                }
 
                 if user.two_FA_type == "EMAIL":
                     server_otp = two_factor_obj.static_otp(otp_len=6)
@@ -252,7 +266,7 @@ def login():
                     courier = PyCourier(
                         sender_email=sender,
                         sender_password=password,
-                        recipients=[session['EMAIL']],
+                        recipients=[email],
                         message=f"""\
     Theorist-Dev Email Two Factor Authentication:
     OTP: {server_otp} (Valid for 5 minutes)
@@ -267,12 +281,11 @@ def login():
                     courier.send_courier()
 
                     redis_client = current_app.redis
-                    redis_client.setex(_otp_key(email=session['EMAIL']), REDIS_TTL, server_otp)
-                    redis_client.delete(_n_attempts_key(email=session['EMAIL']))
-                else:
-                    session['TOTP_TIMESTAMP'] = datetime.now(timezone.utc).isoformat()
+                    redis_client.setex(_otp_key(email=email), REDIS_TTL, server_otp)
+                    redis_client.delete(_n_attempts_key(email=email))
 
-                return redirect(url_for('auth.mfa_login'))
+                mfa_token = s.dumps(payload, salt='mfa-salt')
+                return redirect(url_for('auth.mfa_login', token=mfa_token))
             else:
                 session.clear()
                 login_user(user, remember=False)
@@ -282,30 +295,38 @@ def login():
                 session.permanent = True
                 return redirect(url_for('auth.secrets'))
         else:
-            session.clear()
             flash('Invalid Email or Password', category='error')
             return redirect(url_for('auth.login'))
 
     return render_template("login.html")
 
 
-@auth.route('/mfa-login', methods=['GET', 'POST'])
-def mfa_login():
+@auth.route('/mfa-login/<token>', methods=['GET', 'POST'])
+def mfa_login(token):
     """
 
     """
-    if '2FA_TYPE' not in session:
+    if not token:
         abort(403)
 
-    if 'EMAIL' not in session:
-        abort(403)
+    s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
 
-    user = User.query.filter_by(email=session['EMAIL']).first()
+    try:
+        payload     = s.loads(token, max_age=REDIS_TTL, salt='mfa-salt')
+        user_id     = payload['user_id']
+        email       = payload['email']
+        two_fa_type = payload['two_FA_type']
+
+        user = User.query.get(user_id)
+
+    except (SignatureExpired, BadSignature, BadTimeSignature):
+        flash('Your login link has expired or is invalid. Please try again.', category='error')
+        return redirect(url_for('auth.login'))
 
     if request.method == 'POST':
         user_otp = request.form['OTP']
-        if user and session['2FA_TYPE'] == "EMAIL":
-            otp_comparison_result, status = verify_redis_otp(session['EMAIL'], user_otp)
+        if user and two_fa_type == "EMAIL":
+            otp_comparison_result, status = verify_redis_otp(email=email, user_otp=user_otp)
             if otp_comparison_result:
                 session.clear()
                 login_user(user, remember=False)
@@ -318,23 +339,16 @@ def mfa_login():
                 if status == "EXPIRED" or status == "LOCKED":
                     flash('Your One-Time Password has expired or you have exceeded max attempts. \
                                                                 Please log in again.', category='error')
-                    session.clear()
                     return redirect(url_for('auth.login'))
 
                 flash('Invalid OTP', category='error')
 
-        elif user and session['2FA_TYPE'] == "TOTP":
+        elif user and two_fa_type == "TOTP":
             try:
                 cipher = Fernet(current_app.config["MASTER_TOTP_SECRET_KEY"])
                 encrypted_key = user.two_FA_key
                 encrypted_key = encrypted_key.encode("utf-8")
                 shared_secret = cipher.decrypt(encrypted_key).decode('utf-8')
-
-                otp_timestamp = datetime.fromisoformat(session.get('TOTP_TIMESTAMP'))
-                if datetime.now(timezone.utc) > otp_timestamp + timedelta(minutes=5):
-                    flash('Session Expired. Please try again.', category='error')
-                    session.clear()
-                    return redirect(url_for('auth.login'))
 
                 if two_factor_obj.verify(str(shared_secret), user_otp):
                     session.clear()
@@ -346,12 +360,12 @@ def mfa_login():
                     return redirect(url_for('auth.secrets'))
                 else:
                     flash('Incorrect otp, try again.', category='error')
-            except ValueError:
+            except InvalidToken:
                 flash('Incorrect otp, try again.', category='error')
         else:
             flash('Invalid OTP', category='error')
 
-    return render_template("mfa-login.html")
+    return render_template("mfa-login.html", token=token)
 
 
 @auth.route('/logout')
@@ -531,8 +545,8 @@ def pass_reset(token):
     elif token:
         s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
         try:
-            email = s.loads(token, salt='password-reset-salt', max_age=1800)
-        except Exception:
+            email = s.loads(token, salt='password-reset-salt', max_age=REDIS_TTL * 6)
+        except (BadSignature, SignatureExpired, BadTimeSignature):
             flash('The password reset link is invalid or has expired.', category='error')
             return redirect(url_for('auth.forgot_pass'))
 

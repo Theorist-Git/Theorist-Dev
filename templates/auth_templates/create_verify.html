@@ -2,15 +2,19 @@
 {% block content %}
 
 <div class="container my-3">
-    <h2>Enter OTP</h2>
-    <form action="/otp" method="POST">
-        <div class="mb-3">
-            <label for="OTP" class="form-label">OTP</label>
-            <input autofocus="autofocus" type="text" class="form-control" name="OTP" id="OTP" placeholder="Enter otp sent to your email, valid for 5 minutes" />
+    <h2>Enter Password</h2>
+    <form action="{{ url_for('auth.create_verify', token=token) }}" method="POST">
+        <div class="form-group mb-3">
+            <label for="USERNAME" class="form-label">Name</label>
+            <input autofocus="autofocus" type="text" class="form-control" name="USERNAME" id="USERNAME" placeholder="Name : John Doe" />
         </div>
         <div class="form-group mb-3">
             <label for="PASSWORD">Password</label>
             <input type="password" pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*_=+-]).{8,128}$" class="form-control" name="PASSWORD" id="PASSWORD" placeholder="Password" />
+        </div>
+        <div class="form-group mb-3">
+            <label for="C-PASSWORD">Confirm Password</label>
+            <input type="password" pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*_=+-]).{8,128}$" class="form-control" name="C-PASSWORD" id="C-PASSWORD" placeholder="Password" />
         </div>
         <div class="form-group mb-3">
             Your Password must have:
@@ -22,7 +26,7 @@
             </ul>
         </div>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-        <button id="otpsub" type="submit" class="btn btn-primary">Submit OTP</button>
+        <button id="passsub" type="submit" class="btn btn-primary">Create Account</button>
         <div class="alert alert-primary my-3" role="alert">
             Greetings, Traveller!
         </div>

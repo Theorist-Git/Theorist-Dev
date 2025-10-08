@@ -10,7 +10,7 @@ class User(db.Model, UserMixin):
     SQLAlchemy(). Used to store User data.
     """
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(128))
+    name = db.Column(db.String(128), unique=True)
     password = db.Column(db.String(128))
     email = db.Column(db.String(256), unique=True)
     active = db.Column(db.Boolean)
