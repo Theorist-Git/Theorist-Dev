@@ -5,7 +5,7 @@ from flask_login import login_user, login_required, logout_user, current_user
 from sqlalchemy.exc import IntegrityError
 from werkzeug.exceptions import abort
 from __init__ import db, limiter
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from models import User, Comment
 from PyCourier import PyCourier
 from AuthAlpha import PassHashing, TwoFactorAuth
@@ -25,8 +25,8 @@ two_factor_obj  = TwoFactorAuth()
 password_police = PassHashing("argon2id")
 otp_police      = PassHashing("pbkdf2:sha256")
 
-REDIS_TTL       = 300  # seconds
-MAX_ATTEMPTS    = 5    # max number of attempts
+TIME_TO_LIVE       = 300  # seconds
+MAX_ATTEMPTS       = 5    # max number of attempts for entering OTP
 
 def _otp_key(email: str) -> str:  return f"otp:{email.lower()}"
 def _n_attempts_key(email: str) -> str: return f"otp_attempts:{email.lower()}"
@@ -38,21 +38,21 @@ def verify_redis_otp(email: str, user_otp: str) -> tuple[bool, str]:
 
     # atomic operations
     pipe = redis_client.pipeline()
-    pipe.get(attempts_key)
-    pipe.get(otp_key)
+    pipe.incr(attempts_key)
+    # Set expiry on the attempts key to prevent permanent lockout
+    pipe.expire(attempts_key, TIME_TO_LIVE)
     results = pipe.execute()
 
-    attempts_count_str = results[0]
-    redis_server_otp   = results[1]
+    current_attempts = results[0]
 
-    # 1. Check if OTP has expired or doesn't exist
+    # 1. Check for lockout *before* incrementing attempts
+    if current_attempts > MAX_ATTEMPTS:
+        return False, "LOCKED"
+
+    # 2. Check if OTP has expired or doesn't exist
+    redis_server_otp = redis_client.get(otp_key)
     if redis_server_otp is None:
         return False, "EXPIRED"
-
-    # 2. Check for lockout *before* incrementing attempts
-    attempts_count = int(attempts_count_str) if attempts_count_str else 0
-    if attempts_count >= MAX_ATTEMPTS:
-        return False, "LOCKED"
 
     # 3. Securely compare the supplied OTP with the stored one
     # hmac.compare_digest prevents timing attacks
@@ -64,13 +64,24 @@ def verify_redis_otp(email: str, user_otp: str) -> tuple[bool, str]:
         pipe.execute()
         return True, "SUCCESS"
     else:
-        # FAILURE: OTP is incorrect. Atomically increment the attempt counter.
-        pipe = redis_client.pipeline()
-        pipe.incr(attempts_key)
-        # Set expiry on the attempts key to prevent permanent lockout
-        pipe.expire(attempts_key, REDIS_TTL)
-        pipe.execute()
+        # FAILURE: OTP is incorrect. Attempt already counted
         return False, "INVALID"
+
+def check_redis_max_attempts(email: str):
+    redis_client = current_app.redis
+    attempts_key = _n_attempts_key(email)
+
+    pipe = redis_client.pipeline()
+    pipe.incr(attempts_key)
+    pipe.expire(attempts_key, TIME_TO_LIVE)
+    results = pipe.execute()
+
+    new_attempts_count = results[0]
+
+    if new_attempts_count > MAX_ATTEMPTS:
+        return True  # User is blocked
+
+    return False  # User can proceed
 
 """
 Decorators:
@@ -176,7 +187,7 @@ def create_verify(token):
     s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
 
     try:
-        payload = s.loads(token, max_age=REDIS_TTL * 6, salt='email-verify-salt')
+        payload = s.loads(token, max_age=TIME_TO_LIVE * 6, salt='email-verify-salt')
         email = payload['email']
 
     except (SignatureExpired, BadSignature, BadTimeSignature):
@@ -253,6 +264,7 @@ def login():
             if user.two_FA:
 
                 s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+                redis_client = current_app.redis
 
                 payload = {
                     'user_id'       : user.id,
@@ -280,10 +292,9 @@ def login():
 
                     courier.send_courier()
 
-                    redis_client = current_app.redis
-                    redis_client.setex(_otp_key(email=email), REDIS_TTL, server_otp)
-                    redis_client.delete(_n_attempts_key(email=email))
+                    redis_client.setex(_otp_key(email=email), TIME_TO_LIVE, server_otp)
 
+                redis_client.delete(_n_attempts_key(email=email))
                 mfa_token = s.dumps(payload, salt='mfa-salt')
                 return redirect(url_for('auth.mfa_login', token=mfa_token))
             else:
@@ -312,7 +323,7 @@ def mfa_login(token):
     s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
 
     try:
-        payload     = s.loads(token, max_age=REDIS_TTL, salt='mfa-salt')
+        payload     = s.loads(token, max_age=TIME_TO_LIVE, salt='mfa-salt')
         user_id     = payload['user_id']
         email       = payload['email']
         two_fa_type = payload['two_FA_type']
@@ -349,6 +360,13 @@ def mfa_login(token):
                 encrypted_key = user.two_FA_key
                 encrypted_key = encrypted_key.encode("utf-8")
                 shared_secret = cipher.decrypt(encrypted_key).decode('utf-8')
+
+                max_attempts_consumed = check_redis_max_attempts(email=email)
+                if max_attempts_consumed:
+                    flash('Your One-Time Password has expired or you have exceeded max attempts. \
+                                                                                    Please log in again.',
+                          category='error')
+                    return redirect(url_for('auth.login'))
 
                 if two_factor_obj.verify(str(shared_secret), user_otp):
                     session.clear()
@@ -545,7 +563,7 @@ def pass_reset(token):
     elif token:
         s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
         try:
-            email = s.loads(token, salt='password-reset-salt', max_age=REDIS_TTL * 6)
+            email = s.loads(token, salt='password-reset-salt', max_age=TIME_TO_LIVE * 6)
         except (BadSignature, SignatureExpired, BadTimeSignature):
             flash('The password reset link is invalid or has expired.', category='error')
             return redirect(url_for('auth.forgot_pass'))

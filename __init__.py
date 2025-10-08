@@ -32,19 +32,33 @@ from datetime import timedelta
 from werkzeug.utils import redirect
 from urllib.parse import quote
 from dotenv import load_dotenv
-from os import environ, getenv
+from os import getenv
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from redis import Redis
 
-
-# We define an SQLAlchemy object
-db = SQLAlchemy()
-user = current_user
+# Load ENV variables
 load_dotenv()
 
-redis_url = environ.get('REDIS_URL')
-redis_limiter_url = environ.get('REDIS_LIMITER_URL')
+# MySQL server and SQLAlchemy server config
+db          = SQLAlchemy()
+db_user     = getenv('MYSQL_SERVER_UID')
+db_password = quote(getenv('MYSQL_SERVER_PASS'))
+db_host     = getenv('MYSQL_SERVER_HOST', 'localhost')
+db_database = getenv('MYSQL_SERVER_DB')
+
+if not db_user:
+    raise RuntimeError('MYSQL_SERVER_UID not set in .env file. Aborting...')
+if not db_password:
+    raise RuntimeError('MYSQL_SERVER_PASS not set in .env file. Aborting...')
+if not db_database:
+    raise RuntimeError('MYSQL_SERVER_DB not set in .env file. Aborting...')
+
+sqlalchemy_database_uri = f'mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_database}'
+
+# REDIS CONFIG: sets us Flask limiter and a general purpose flask server
+redis_url           = getenv('REDIS_URL')
+redis_limiter_url   = getenv('REDIS_LIMITER_URL')
 
 if not redis_url or not redis_limiter_url:
     raise RuntimeError("REDIS_URL or REDIS_LIMITER_URL is not configured in ENV")
@@ -57,6 +71,18 @@ limiter = Limiter(
     strategy="fixed-window",  # or "moving-window"
 )
 
+redis_client = Redis.from_url(
+    redis_url,
+    decode_responses=True,
+    socket_connect_timeout=5,
+    socket_timeout=2,
+    health_check_interval=30,
+)
+
+try:
+    redis_client.ping()
+except Exception as e:
+    raise RuntimeError("Redis not available")
 
 def create_app():
     """
@@ -68,30 +94,17 @@ def create_app():
     app = Flask(__name__)
     admin = Admin(app, name="Theorist", template_mode="bootstrap4")
 
-    limiter.init_app(app)
-
-    redis_client = Redis.from_url(
-        redis_url,
-        decode_responses=True,
-        socket_connect_timeout=5,
-        socket_timeout=2,
-        health_check_interval=30,
-    )
-
-    try:
-        redis_client.ping()
-    except Exception as e:
-        app.logger.exception("Redis (app) not available: %s", e)
-        raise RuntimeError("Redis not available")
-
-    app.redis = redis_client
-
-    # Ensure CSRF token is present in every request
+    # Register app-wide CSRF protection
     CSRFProtect(app)
 
-    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://theorist:%s@localhost/theorist_dev' % \
-                              quote(environ['THEORIST_LOCALHOST_PASS'])
+    # Register redis clients with app
+    limiter.init_app(app)
+    app.redis = redis_client
 
+    # Import crypto keys
+    # 1. Flask Secret key       : Used by Flask for signing sessions and other internal uses.
+    # 2. CSRF Secret Key        : Used by Flask-WTF to generate and verify CSRF tokens.
+    # 3. Master TOTP Secret Key : System wide master key used to encrypt decrypt TOTP shared secrets.
     master_totp_secret_key  = getenv("MASTER_TOTP_SECRET_KEY")
     wtf_csrf_secret_key     = getenv("WTF_CSRF_SECRET_KEY")
     flask_secret_key        = getenv("SECRET_KEY")
@@ -108,36 +121,27 @@ def create_app():
         app.logger.critical("FATAL: Flask secret key not found. Aborting....")
         raise RuntimeError("SECRET_KEY not configured in ENV")
 
-    # 256 bit security key
-    app.config['SECRET_KEY'] = flask_secret_key
-    app.config['MASTER_TOTP_SECRET_KEY'] = master_totp_secret_key.encode('utf-8')
-    app.config['WTF_CSRF_SECRET_KEY'] = wtf_csrf_secret_key
-    app.config['SESSION_COOKIE_SECURE'] = True
-    app.config['SESSION_COOKIE_HTTPONLY'] = True
-    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-    app.config['REMEMBER_COOKIE_SECURE'] = True
-    app.config['REMEMBER_COOKIE_HTTPONLY'] = True
-    app.config['REMEMBER_COOKIE_SAMESITE'] = "Lax"
-    app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    # Flask internal settings
+    app.config['SECRET_KEY']                        = flask_secret_key
+    app.config['MASTER_TOTP_SECRET_KEY']            = master_totp_secret_key.encode('utf-8')
+    app.config['WTF_CSRF_SECRET_KEY']               = wtf_csrf_secret_key
+    app.config['SESSION_COOKIE_SECURE']             = True
+    app.config['SESSION_COOKIE_HTTPONLY']           = True
+    app.config['SESSION_COOKIE_SAMESITE']           = 'Lax'
+    app.config['REMEMBER_COOKIE_SECURE']            = True
+    app.config['REMEMBER_COOKIE_HTTPONLY']          = True
+    app.config['REMEMBER_COOKIE_SAMESITE']          = "Lax"
+    app.config['SQLALCHEMY_DATABASE_URI']           = sqlalchemy_database_uri
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS']    = False
     # The session will time out after 720 minutes or 12 hours
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=720)
-    # set optional bootswatch theme
     app.config['FLASK_ADMIN_SWATCH'] = 'darkly'
 
-    # This callback can be used to initialize an application for the
-    # use with this database setup.  Never use a database in the context
-    # of an application not initialized that way or connections will
-    # leak.
-
-    db.init_app(app)
-
-    # importing view blueprints from their respective files, to be registered with the flask app.
+    # Blueprints to be registered with the base Flask instance.
     from auth import auth
     from views import views
     from projects import projects
 
-    # To be fixed after views are fixed!!!
     app.register_blueprint(auth, url_prefix='/')
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(projects, url_prefix='/project')
@@ -156,7 +160,9 @@ def create_app():
     def internal_server_error(_):
         return render_template('500.html'), 500
 
-    # Importing database model (see models.py).
+    # Importing table schema (see models.py).
+    # Register SQLAlchemy object with the app
+    db.init_app(app)
     from models import User, Post, Comment
 
     # Will create tables if they're not there
@@ -166,37 +172,29 @@ def create_app():
     class AnalyticsView(BaseView):
         def is_accessible(self):
             """
-            is_accessible method is overridden method in BaseView and make it so that only users that
+            is_accessible method is overridden method in BaseView and makes it so that only users that
             are authenticated and have an "admin" role can access admin views.
             :return: Boolean (True -> is_accessible) & (False -> is_not_accessible)
             """
-            if not current_user.is_authenticated:
-                return False
-
-            admin_user = User.query.get(current_user.id)
-            return bool(admin_user and admin_user.role == "admin")
+            return current_user.is_authenticated and current_user.role == "admin"
 
         # '/' means /admin/
         @expose('/', methods=['GET', 'POST'])
         def index(self):
             if request.method == 'POST':
-                del_email = request.form['EMAIL']
-                del_user= User.query.filter_by(email=del_email).first()
+                del_email = request.form.get('EMAIL')
+
+                if not del_email:
+                    flash("Please enter a valid email address.")
+                    return render_template('/admin_views/admin_delete_user.html')
+
+                del_user  = User.query.filter_by(email=del_email).first()
 
                 if del_email and del_user and del_user.role != "admin":
-                    import os
                     Post.query.filter_by(user_id=del_user.id).delete()
                     Comment.query.filter_by(user_id=del_user.id).delete()
-
-                    parent_dir = "templates/blogindex"
-                    path = os.path.join(parent_dir, del_user.email)
-
-                    is_dir = os.path.isdir(path)
-                    if is_dir:
-                        from shutil import rmtree
-                        rmtree(path)
-
                     User.query.filter_by(email=del_user.email).delete()
+
                     db.session.commit()
                     flash("Account deleted successfully")
 
@@ -212,11 +210,7 @@ def create_app():
             are authenticated and have an "admin" role can access admin views.
             :return: Boolean (True -> is_accessible) & (False -> is_not_accessible)
             """
-            if not current_user.is_authenticated:
-                return False
-
-            admin_user = User.query.get(current_user.id)
-            return bool(admin_user and admin_user.role == "admin")
+            return current_user.is_authenticated and current_user.role == "admin"
 
         def inaccessible_callback(self, name, **kwargs):
             """
