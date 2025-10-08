@@ -599,6 +599,10 @@ def delete():
     """
     if request.method == 'POST' and (current_user.role != "admin" and current_user.role != "author"):
 
+        if not password_police.check_password_hash(current_user.password, request.form['PASSWORD']):
+            flash("Invalid Password", category='error')
+            return render_template('delete.html', current_user=current_user)
+
         Comment.query.filter_by(user_id=current_user.id).delete()
         User.query.filter_by(email=current_user.email).delete()
         db.session.commit()
@@ -609,4 +613,4 @@ def delete():
 
         return redirect(url_for('auth.login'))
 
-    return render_template('delete.html')
+    return render_template('delete.html', current_user=current_user)

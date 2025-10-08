@@ -19,17 +19,39 @@
                     <h5 class="modal-title" id="exampleModalLabel">Confirm Deletion</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">Are you sure you want to delete your <b>Account</b> and its <b>associated data permanently</b>?</div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <form action="/delete" method="POST">
+                <div class="modal-body my-2">Are you sure you want to delete your <b>Account</b> and its <b>associated data permanently</b>?
+                    <form action="{{ url_for('auth.delete') }}" method="POST">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                        <button type="submit" class="btn btn-danger">Delete Account</button>
+                        <label for="PASSWORD">Password</label>
+                        <input type="password" class="form-control" name="PASSWORD" id="PASSWORD" placeholder="Password" />
+                        <div class="d-flex justify-content-end gap-2 my-1">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                          <button type="submit" class="btn btn-danger">Delete Account</button>
+                        </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- JINJA to display flashed messages -->
+	<div class="my-3">
+		{% with messages = get_flashed_messages(with_categories=true) %}
+			{% if messages %}
+				{% for category, message in messages %}
+					{% if category == 'error' %}
+						<div class="alert alert-danger" role="alert">
+						{{ message }}
+						</div>
+					{% else %}
+						<div class="alert alert-success" role="alert">
+						{{ message }}
+						</div>
+					{% endif %}
+				{% endfor %}
+			{% endif %}
+		{% endwith %}
+	</div>
 </div>
 
 <style>
